@@ -16,7 +16,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { usePathname } from "next/navigation"
 import { navData } from "@/components/layout/routes"
-import { ModeToggle } from "@/components/layout/themeTogge"
+import { ModeToggle } from "@/components/layout/themeToggle"
 
 interface Breadcrumb {
     title: string;
