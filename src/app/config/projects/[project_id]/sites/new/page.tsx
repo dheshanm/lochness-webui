@@ -7,10 +7,12 @@ import SiteForm from "@/components/forms/site"
 
 import { Button } from "@/components/ui/button"
 
+type Params = Promise<{ project_id: string }>
+
 export default function AddProjectSite({
     params,
 }: {
-    params: { project_id: string }
+    params: Params
 }) {
     const [projectId, setProjectId] = React.useState<string | null>(null);
 

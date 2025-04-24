@@ -6,10 +6,12 @@ import { Pencil } from "lucide-react"
 
 import ProjectForm from "@/components/forms/project"
 
+type Params = Promise<{ project_id: string }>
+
 export default function EditProjectPage({
     params,
 }: {
-    params: { project_id: string }
+    params: Params
 }) {
     const [projectId, setProjectId] = React.useState<string | null>(null);
 

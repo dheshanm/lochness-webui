@@ -19,10 +19,12 @@ import { Button } from "@/components/ui/button"
 // import { Project } from '@/types/projects';
 import { Site } from '@/types/sites';
 
+type Params = Promise<{ project_id: string, site_id: string }>
+
 export default function SitePage({
     params,
 }: {
-    params: { project_id: string, site_id: string }
+    params: Params
 }) {
     const [projectId, setProjectId] = React.useState<string | null>(null);
     const [siteId, setSiteId] = React.useState<string | null>(null);

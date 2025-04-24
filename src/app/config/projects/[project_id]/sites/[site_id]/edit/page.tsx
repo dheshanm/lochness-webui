@@ -15,10 +15,12 @@ import {
 // import NewProjectSiteForm from "@/components/forms/new-project-site"
 import SiteForm from "@/components/forms/site"
 
+type Params = Promise<{ project_id: string, site_id: string }>
+
 export default function AddProjectSite({
     params,
 }: {
-    params: { project_id: string, site_id: string }
+    params: Params
 }) {
     const [projectId, setProjectId] = React.useState<string | null>(null);
     const [siteId, setSiteId] = React.useState<string | null>(null);

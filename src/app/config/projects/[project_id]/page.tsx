@@ -14,10 +14,12 @@ import { Project } from '@/types/projects';
 // import SitesListPlaceholder from "@/components/placeholders/config/sites"
 import SitesList from '@/components/lists/sites';
 
+type Params = Promise<{ project_id: string }>
+
 export default function ProjectPage({
     params,
 }: {
-    params: { project_id: string }
+    params: Params
 }) {
     const [projectId, setProjectId] = React.useState<string | null>(null);
     const [project, setProject] = React.useState<Project | null>(null);
@@ -118,7 +120,7 @@ export default function ProjectPage({
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="container mx-auto p-6 max-w-5xl flex flex-col h-full">
                         <div className="grid gap-4">
                             <div>
