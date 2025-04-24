@@ -2,8 +2,8 @@ import { Settings } from "lucide-react"
 
 import { Heading } from '@/components/heading'
 
-import ProjectsList from '@/components/lists/projects';
-import SitesListPlaceholder from "@/components/placeholders/config/sites"
+import ProjectsList from '@/components/lists/projects_v2';
+// import SitesListPlaceholder from "@/components/placeholders/config/sites"
 
 
 export default function ConfigPage() {
@@ -15,7 +15,7 @@ export default function ConfigPage() {
 
                 <ProjectsList />
 
-                <SitesListPlaceholder />
+                {/* <SitesListPlaceholder /> */}
 
             </div>
         </div>

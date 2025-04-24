@@ -45,11 +45,12 @@ export async function GET(request: Request): Promise<Response> {
  */
 export async function POST(request: Request): Promise<Response> {
     const body = await request.json();
-    const { project_id, project_name, project_metadata } = body;
-
+    const { project_id, project_name, project_is_active, project_metadata } = body;
+    
     const newProject: Project = {
         project_id,
         project_name,
+        project_is_active,
         project_metadata,
     };
 

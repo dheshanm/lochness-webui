@@ -20,46 +20,56 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 
-const formSchema = z.object({
+const newProjectSiteFormSchemaSchema = z.object({
     project_id: z.string()
         .min(1, "Project ID is required")
         .regex(/^[a-zA-Z0-9_-]+$/, "Project ID must contain only letters, numbers, underscores, and hyphens"),
-    project_name: z.string().min(1, "Project Name is required"),
-    project_is_active: z.boolean(),
-    project_description: z.string()
-        .max(500, "Project Description must be less than 500 characters")
-        .optional()
+    site_id: z.string()
+        .min(1, "Site ID is required")
+        .regex(/^[a-zA-Z0-9_-]+$/, "Site ID must contain only letters, numbers, underscores, and hyphens"),
+    site_name: z.string().min(1, "Site Name is required"),
+    site_is_active: z.boolean(),
+    site_description: z.string()
+        .max(500, "Site Description must be less than 500 characters")
 })
 
-export type FormSchema = z.infer<typeof formSchema>
+export type NewProjectSiteFormSchema = z.infer<typeof newProjectSiteFormSchemaSchema>
 
-export default function NewProjectForm() {
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+export type NewProjectSiteFormProps = {
+    project_id: string
+}
+
+export default function NewProjectSiteForm({
+    project_id
+}: NewProjectSiteFormProps) {
+    const form = useForm<z.infer<typeof newProjectSiteFormSchemaSchema>>({
+        resolver: zodResolver(newProjectSiteFormSchemaSchema),
         defaultValues: {
-            project_id: "",
-            project_name: "",
-            project_is_active: true,
-            project_description: ""
+            project_id: project_id,
+            site_id: "",
+            site_name: "",
+            site_is_active: true,
+            site_description: ""
         }
     })
 
-    function handleFormSubmit(values: z.infer<typeof formSchema>) {
+    function handleFormSubmit(values: z.infer<typeof newProjectSiteFormSchemaSchema>) {
         const formData = {
             ...values,
         }
 
         const body = {
-            project_id: formData.project_id,
-            project_name: formData.project_name,
-            project_is_active: formData.project_is_active,
-            project_metadata: {
-                description: formData.project_description,
+            project_id: project_id,
+            site_id: formData.site_id,
+            site_name: formData.site_name,
+            site_is_active: formData.site_is_active,
+            site_metadata: {
+                description: formData.site_description,
                 created_at: new Date().toISOString(),
             }
         }
 
-        fetch(`/api/v1/projects`, {
+        fetch(`/api/v1/projects/${project_id}/sites`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -73,12 +83,10 @@ export default function NewProjectForm() {
                 return response.json();
             })
             .then(() => {
-                toast.success("Added Project successfully");
-                // Take user to the project page
-                window.location.href = `/config/projects/${formData.project_id}`;
+                toast.success("Added Site successfully");
             })
             .catch((error) => {
-                toast.error("Failed to add project");
+                toast.error("Failed to add site");
                 console.error("Error:", error);
             });
     }
@@ -98,10 +106,10 @@ export default function NewProjectForm() {
                                     <FormItem>
                                         <FormLabel className="font-medium">Project ID</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Enter project ID" {...field} className="bg-white dark:bg-slate-800" />
+                                            <Input disabled placeholder="Enter Project ID" {...field} className="bg-white dark:bg-slate-800" />
                                         </FormControl>
                                         <FormDescription className="text-xs">
-                                            A unique identifier for the project (e.g., PRESCIENT, ProNET)
+                                            Project to add this site to.
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -110,15 +118,15 @@ export default function NewProjectForm() {
 
                             <FormField
                                 control={form.control}
-                                name="project_name"
+                                name="site_id"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="font-medium">Project Name</FormLabel>
+                                        <FormLabel className="font-medium">Site ID</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Enter project name" {...field} className="bg-white dark:bg-slate-800" />
+                                            <Input placeholder="Enter Site ID" {...field} className="bg-white dark:bg-slate-800" />
                                         </FormControl>
                                         <FormDescription className="text-xs">
-                                            A descriptive name for your project
+                                            A unique identifier for the Site (e.g., ME, LA)
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -127,7 +135,24 @@ export default function NewProjectForm() {
 
                             <FormField
                                 control={form.control}
-                                name="project_is_active"
+                                name="site_name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="font-medium">Site Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Enter site name" {...field} className="bg-white dark:bg-slate-800" />
+                                        </FormControl>
+                                        <FormDescription className="text-xs">
+                                            A descriptive name for your site
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="site_is_active"
                                 render={({ field }) => (
                                     <FormItem className="flex items-center space-x-2">
                                         <FormControl>
@@ -145,15 +170,15 @@ export default function NewProjectForm() {
 
                             <FormField
                                 control={form.control}
-                                name="project_description"
+                                name="site_description"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="font-medium">Project Description</FormLabel>
+                                        <FormLabel className="font-medium">Site Description</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Enter project description (Optional)" {...field} className="bg-white dark:bg-slate-800 h-32" />
+                                            <Textarea placeholder="Enter site description (Optional)" {...field} className="bg-white dark:bg-slate-800 h-32" />
                                         </FormControl>
                                         <FormDescription className="text-xs">
-                                            A brief description of the project (max 500 characters)
+                                            A brief description of the site (max 500 characters)
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -167,7 +192,7 @@ export default function NewProjectForm() {
                             <Eraser /> Reset
                         </Button>
                         <Button type="submit" variant="default" className="px-8">
-                            <Plus /> Create Project
+                            <Plus /> Create Site
                         </Button>
                     </div>
                 </form>

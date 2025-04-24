@@ -68,11 +68,11 @@ export default function ProjectsList() {
 
     return (
         <div className="space-y-6 min-w-[320px]">
-            <div className="bg-gray-50/80 dark:bg-slate-800/60 rounded-xl shadow-sm p-6 transition-all border border-gray-200/80 dark:border-emerald-900/20 backdrop-blur-sm">
+            <div className="">
                 <div className="flex justify-between items-center mb-5">
                     <h2 className="text-xl font-medium text-gray-800 dark:text-emerald-50 flex items-center gap-2">
                         <FolderOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                        Active Projects
+                        Active Projects V2
                     </h2>
 
                     <div className="flex space-x-2">
@@ -91,53 +91,25 @@ export default function ProjectsList() {
                     </div>
                 </div>
 
-                <Carousel className="w-full">
-                    <CarouselContent className="-ml-2 md:-ml-4">
-                        {projects.length > 0 ? (
-                            projects.map((project) => (
-                                <CarouselItem 
-                                    key={project.project_id} 
-                                    className={`pl-2 md:pl-4 ${
-                                        projects.length === 1 ? 'basis-full' : 
-                                        projects.length === 2 ? 'basis-full sm:basis-1/2' : 
-                                        'basis-full sm:basis-1/2 md:basis-1/3'
-                                    }`}
-                                >
-                                    <div className="h-full flex items-center justify-center p-1">
-                                        <ProjectCard project={project} showActions={false} />
-                                    </div>
-                                </CarouselItem>
-                            ))
-                        ) : loading ? (
-                            Array(3).fill(0).map((_, i) => (
-                                <CarouselItem key={`skeleton-${i}`} className="basis-full sm:basis-1/2 md:basis-1/3 pl-2 md:pl-4">
-                                    <div className="h-full flex items-center justify-center p-1">
-                                        <SkeletonCard />
-                                    </div>
-                                </CarouselItem>
-                            ))
-                        ) : (
-                            <CarouselItem className="pl-2 md:pl-4 basis-full">
-                                <div className="flex flex-col items-center justify-center h-[240px] rounded-lg border border-dashed border-gray-300/70 dark:border-gray-700/50 bg-gray-50/50 dark:bg-slate-800/30">
-                                    <p className="text-gray-500 dark:text-gray-400 mb-2">No projects found</p>
-                                    <Button asChild variant="outline" size="sm" className="mt-2">
-                                        <Link href="/config/projects/new">
-                                            <Plus className="h-4 w-4 mr-1" />
-                                            Create Project
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </CarouselItem>
-                        )}
-                    </CarouselContent>
-
-                    {projects.length > 1 && (
-                        <>
-                            <CarouselPrevious className="left-1 shadow-sm opacity-70 hover:opacity-100" />
-                            <CarouselNext className="right-1 shadow-sm opacity-70 hover:opacity-100" />
-                        </>
+                <div className="flex justify-center items-center w-full">
+                    {projects && projects.length > 0 ? (
+                        <Carousel className="w-full relative px-12">
+                            <CarouselContent className="-ml-1">
+                                {projects.map((project, index) => (
+                                    <CarouselItem key={index} className="basis-full sm:basis-1/2 md:basis-1/2 lg:basis-1/3">
+                                        <ProjectCard project={project} />
+                                    </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                            <CarouselPrevious className="bg-emerald-100/70 hover:bg-emerald-200/80 text-emerald-800 -left-3 sm:left-0 h-8 w-8 sm:h-10 sm:w-10 backdrop-blur-sm" />
+                            <CarouselNext className="bg-emerald-100/70 hover:bg-emerald-200/80 text-emerald-800 -right-3 sm:right-0 h-8 w-8 sm:h-10 sm:w-10 backdrop-blur-sm" />
+                        </Carousel>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-[240px] w-full rounded-lg border border-dashed border-gray-300/70 dark:border-gray-700/50 bg-gray-50/50 dark:bg-slate-800/30">
+                            <p className="text-gray-500 dark:text-gray-400 mb-2">No Projects found</p>
+                        </div>
                     )}
-                </Carousel>
+                </div>
 
                 <div className="mt-6">
                     {loading ? (

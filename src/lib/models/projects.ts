@@ -22,6 +22,7 @@ export class Projects {
         const projects: Project[] = rows.map((row: any) => ({
             project_id: row.project_id,
             project_name: row.project_name,
+            project_is_active: row.project_is_active,
             project_metadata: row.project_metadata,
         }));
 
@@ -57,6 +58,7 @@ export class Projects {
         const project: Project = {
             project_id: rows[0].project_id,
             project_name: rows[0].project_name,
+            project_is_active: rows[0].project_is_active,
             project_metadata: rows[0].project_metadata,
         };
         return project;
@@ -71,15 +73,17 @@ export class Projects {
     static async createOrUpdateProject(project: Project): Promise<DBUpdateResult> {
         const connection = getConnection();
         const query = `
-            INSERT INTO projects (project_id, project_name, project_metadata)
-            VALUES ($1, $2, $3)
+            INSERT INTO projects (project_id, project_name, project_is_active, project_metadata)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (project_id) DO UPDATE
             SET project_name = EXCLUDED.project_name,
-                project_metadata = EXCLUDED.project_metadata;
+                project_metadata = EXCLUDED.project_metadata,
+                project_is_active = EXCLUDED.project_is_active;
         `;
         const values = [
             project.project_id,
             project.project_name,
+            project.project_is_active,
             project.project_metadata,
         ];
         const result = await connection.query(query, values);

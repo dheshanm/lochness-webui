@@ -35,21 +35,21 @@ export const navData = {
                     url: "/config/projects",
                     isActive: false,
                 },
-                {
-                    title: "Sites",
-                    url: "/config/sites",
-                    isActive: false,
-                },
-                {
-                    title: "Data Sources",
-                    url: "/config/data-sources",
-                    isActive: false,
-                },
-                {
-                    title: "Data Sinks",
-                    url: "/config/data-sinks",
-                    isActive: false,
-                },
+                // {
+                //     title: "Sites",
+                //     url: "/config/sites",
+                //     isActive: false,
+                // },
+                // {
+                //     title: "Data Sources",
+                //     url: "/config/data-sources",
+                //     isActive: false,
+                // },
+                // {
+                //     title: "Data Sinks",
+                //     url: "/config/data-sinks",
+                //     isActive: false,
+                // },
             ],
         },
     ],

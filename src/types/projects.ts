@@ -8,6 +8,7 @@
 export type Project = {
     project_id: string;
     project_name: string;
+    project_is_active: boolean;
     project_metadata: {
         [key: string]: any;
     };

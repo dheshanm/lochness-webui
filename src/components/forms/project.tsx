@@ -1,10 +1,11 @@
 "use client"
+import * as React from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner";
 
-import { Plus, Eraser } from "lucide-react"
+import { Pencil, Eraser } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,6 +20,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
+import { Project } from '@/types/projects'
 
 const formSchema = z.object({
     project_id: z.string()
@@ -33,16 +35,59 @@ const formSchema = z.object({
 
 export type FormSchema = z.infer<typeof formSchema>
 
-export default function NewProjectForm() {
+export type ProjectFormProps = {
+    project_id: string | null
+}
+
+export default function ProjectForm({
+    project_id,
+}: ProjectFormProps) {
+
+    const [project, setProject] = React.useState<Project | null>(null)
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            project_id: "",
+            project_id: project_id ? project_id : "",
             project_name: "",
-            project_is_active: true,
-            project_description: ""
+            project_is_active: undefined,
+            project_description: "",
         }
     })
+
+    React.useEffect(() => {
+        const fetchProject = async () => {
+            try {
+                const response = await fetch(`/api/v1/projects/${project_id}`)
+                if (!response.ok) {
+                    throw new Error('Failed to fetch project')
+                }
+                const data = await response.json()
+                console.log(data)
+                setProject(data)
+            } catch (error) {
+                console.error(error)
+                toast.error('Failed to fetch project')
+            }
+        }
+
+        if (project_id) {
+            fetchProject()
+        }
+        // If project_id is null, it means we are creating a new project
+        // If creating a new project, no need to fetch
+
+    }, [project_id])
+
+
+    React.useEffect(() => {
+        form.reset({
+            project_id: project_id ? project_id : "",
+            project_name: project?.project_name || "",
+            project_is_active: project?.project_is_active || undefined,
+            project_description: project?.project_metadata?.description || undefined,
+        });
+    }, [project])
 
     function handleFormSubmit(values: z.infer<typeof formSchema>) {
         const formData = {
@@ -59,6 +104,12 @@ export default function NewProjectForm() {
             }
         }
 
+        if (project) {
+            body.project_metadata.created_at = project.project_metadata.created_at
+        }
+
+        console.log(body)
+
         fetch(`/api/v1/projects`, {
             method: "POST",
             headers: {
@@ -73,21 +124,29 @@ export default function NewProjectForm() {
                 return response.json();
             })
             .then(() => {
-                toast.success("Added Project successfully");
+                if (project) {
+                    toast.success("Updated Project successfully");
+                } else {
+                    toast.success("Added Project successfully");
+                }
                 // Take user to the project page
                 window.location.href = `/config/projects/${formData.project_id}`;
             })
             .catch((error) => {
-                toast.error("Failed to add project");
+                if (project) {
+                    toast.error("Failed to update project");
+                } else {
+                    toast.error("Failed to add project");
+                }
                 console.error("Error:", error);
             });
     }
 
     return (
         <div className="container mx-auto p-6 max-w-2xl">
-            <Form {...form}>
+              <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
-                    <div className="border rounded-lg p-6 bg-slate-50 dark:bg-slate-900 shadow-sm">
+                    <div className="sm:border sm:rounded-lg sm:p-6 sm:bg-slate-50 sm:dark:bg-slate-900 sm:shadow-sm">
                         {/* <h2 className="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-200 border-b pb-3 border-slate-200 dark:border-slate-700 flex items-center gap-2"><Plus className="w-5 h-5" /> Create New Project</h2> */}
 
                         <div className="space-y-6">
@@ -98,7 +157,12 @@ export default function NewProjectForm() {
                                     <FormItem>
                                         <FormLabel className="font-medium">Project ID</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Enter project ID" {...field} className="bg-white dark:bg-slate-800" />
+                                            <Input 
+                                                placeholder="Enter project ID" 
+                                                {...field} 
+                                                disabled={!!project}
+                                                className="bg-white dark:bg-slate-800" 
+                                            />
                                         </FormControl>
                                         <FormDescription className="text-xs">
                                             A unique identifier for the project (e.g., PRESCIENT, ProNET)
@@ -167,7 +231,7 @@ export default function NewProjectForm() {
                             <Eraser /> Reset
                         </Button>
                         <Button type="submit" variant="default" className="px-8">
-                            <Plus /> Create Project
+                            <Pencil /> Update Project
                         </Button>
                     </div>
                 </form>
