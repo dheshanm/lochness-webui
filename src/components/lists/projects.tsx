@@ -72,7 +72,7 @@ export default function ProjectsList() {
                 <div className="flex justify-between items-center mb-5">
                     <h2 className="text-xl font-medium text-gray-800 dark:text-emerald-50 flex items-center gap-2">
                         <FolderOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                        Active Projects V2
+                        Active Projects
                     </h2>
 
                     <div className="flex space-x-2">

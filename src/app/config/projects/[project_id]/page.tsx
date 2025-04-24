@@ -8,6 +8,7 @@ import { Activity, ChevronLeft, Pencil, Plus } from "lucide-react";
 
 import { SkeletonCard } from '@/components/placeholders/card';
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton"
 
 import { Project } from '@/types/projects';
 
@@ -64,37 +65,88 @@ export default function ProjectPage({
     return (
         <>
             {loading ? (
-                <div className="container mx-auto p-6 max-w-5xl flex flex-col h-full">
-                    <div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-6"></div>
-                    <SkeletonCard />
-                </div>
+                <>
+                    {/* Skeleton for Header */}
+                    <div className="p-4 md:p-4 border-b">
+                        <div className="max-w-screen-xl mx-auto">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                    {/* Back Button Skeleton */}
+                                    <Skeleton className="h-10 w-10 rounded hidden sm:flex bg-gray-200 dark:bg-gray-700" />
+                                    <div>
+                                        {/* Title Skeleton */}
+                                        <Skeleton className="h-7 w-48 mb-1 bg-gray-200 dark:bg-gray-700" />
+                                        {/* Project ID Skeleton */}
+                                        <Skeleton className="h-3 w-32 bg-gray-200 dark:bg-gray-700" />
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {/* Edit Button Skeleton */}
+                                    <Skeleton className="h-9 w-20 rounded bg-gray-200 dark:bg-gray-700" />
+                                    {/* Active/Inactive Button Skeleton */}
+                                    <Skeleton className="h-9 w-24 rounded bg-gray-200 dark:bg-gray-700" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Skeleton for Main Content */}
+                    <div className="container mx-auto p-6 max-w-5xl flex flex-col h-full">
+                        <div className="grid gap-6">
+                            {/* Metadata Skeleton */}
+                            <div className="grid gap-4">
+                                <div>
+                                    <Skeleton className="h-4 w-16 mb-2 bg-gray-200 dark:bg-gray-700" /> {/* Created Label */}
+                                    <Skeleton className="h-4 w-40 bg-gray-200 dark:bg-gray-700" /> {/* Created Date */}
+                                </div>
+                                <div>
+                                    <Skeleton className="h-4 w-24 mb-2 bg-gray-200 dark:bg-gray-700" /> {/* Description Label */}
+                                    <Skeleton className="h-4 w-full mb-1 bg-gray-200 dark:bg-gray-700" /> {/* Description Line 1 */}
+                                    <Skeleton className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700" />      {/* Description Line 2 */}
+                                </div>
+                            </div>
+
+                            {/* Sites Section Skeleton */}
+                            <div className="mt-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <div>
+                                        <Skeleton className="h-6 w-16 mb-2 bg-gray-200 dark:bg-gray-700" /> {/* Sites Title */}
+                                        <Skeleton className="h-4 w-64 bg-gray-200 dark:bg-gray-700" />      {/* Sites Description */}
+                                    </div>
+                                    {/* Add Site Button Skeleton */}
+                                    <Skeleton className="h-9 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+                                </div>
+                                {/* Placeholder for Sites List */}
+                                <div className="flex space-x-4 mt-4">
+                                    <SkeletonCard />
+                                    <SkeletonCard />
+                                    <SkeletonCard />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
             ) : project ? (
                 <>
                     <div className="p-4 md:p-4 border-b">
                         <div className="max-w-screen-xl mx-auto">
-
                             <div className="flex items-center justify-between">
-
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                        <Button
-                                            variant="ghost"
-                                            size="lg"
-                                            asChild
-                                            className="mr-2 hidden sm:flex"
-                                        >
-                                            <Link href="/config/projects" className="flex items-center">
-                                                <ChevronLeft />
-                                            </Link>
-                                        </Button>
-                                        <div>
-                                            <h2 className="text-2xl font-medium">{project.project_name || 'Untitled Project'}</h2>
-                                            <p className="text-xs text-gray-500">Project ID: {projectId}</p>
-                                        </div>
+                                <div className="flex items-center space-x-4">
+                                    <Button
+                                        variant="ghost"
+                                        size="lg"
+                                        asChild
+                                        className="mr-2 hidden sm:flex"
+                                    >
+                                        <Link href="/config/projects" className="flex items-center">
+                                            <ChevronLeft />
+                                        </Link>
+                                    </Button>
+                                    <div>
+                                        <h2 className="text-2xl font-medium">{project.project_name || 'Untitled Project'}</h2>
+                                        <p className="text-xs text-gray-500">Project ID: {projectId}</p>
                                     </div>
                                 </div>
-
-
                                 <div className="flex items-center gap-2">
                                     <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
                                         <Link href={`/config/projects/${projectId}/edit`} className="flex items-center gap-2">
@@ -102,7 +154,6 @@ export default function ProjectPage({
                                             <span className="hidden sm:inline">Edit</span>
                                         </Link>
                                     </Button>
-
                                     <Button
                                         size="sm"
                                         variant={project.project_is_active ? "outline" : "secondary"}

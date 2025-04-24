@@ -1,6 +1,7 @@
 "use client"
 import * as React from "react"
 import { useEffect, useMemo, useState } from "react"
+import { usePathname } from "next/navigation"
 
 import {
     SidebarTrigger
@@ -14,9 +15,9 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
-import { usePathname } from "next/navigation"
 import { navData } from "@/components/layout/routes"
 import { ModeToggle } from "@/components/layout/themeToggle"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Breadcrumb {
     title: string;
@@ -87,22 +88,28 @@ export default function AppHeader() {
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
                 <BreadcrumbList>
-                    {breadcrumbs.map((crumb, index) => (
-                        <React.Fragment key={crumb.url}>
-                            <BreadcrumbItem className={index === 0 ? "hidden md:block" : ""}>
-                                {crumb.isActive ? (
-                                    <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
-                                ) : (
-                                    <BreadcrumbLink href={crumb.url}>
-                                        {crumb.title}
-                                    </BreadcrumbLink>
+                    {breadcrumbs.length === 0 ? (
+                        <BreadcrumbItem>
+                            <Skeleton className="h-4 w-[150px] bg-gray-200 dark:bg-gray-700" />
+                        </BreadcrumbItem>
+                    ) : (
+                        breadcrumbs.map((crumb, index) => (
+                            <React.Fragment key={crumb.url}>
+                                <BreadcrumbItem className={index === 0 ? "hidden md:block" : ""}>
+                                    {crumb.isActive ? (
+                                        <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
+                                    ) : (
+                                        <BreadcrumbLink href={crumb.url}>
+                                            {crumb.title}
+                                        </BreadcrumbLink>
+                                    )}
+                                </BreadcrumbItem>
+                                {index < breadcrumbs.length - 1 && (
+                                    <BreadcrumbSeparator className={index === 0 ? "hidden md:block" : ""} />
                                 )}
-                            </BreadcrumbItem>
-                            {index < breadcrumbs.length - 1 && (
-                                <BreadcrumbSeparator className={index === 0 ? "hidden md:block" : ""} />
-                            )}
-                        </React.Fragment>
-                    ))}
+                            </React.Fragment>
+                        ))
+                    )}
                 </BreadcrumbList>
             </Breadcrumb>
             <div className="ml-auto flex items-center gap-2">
