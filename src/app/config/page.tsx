@@ -1,8 +1,8 @@
-import { Settings } from "lucide-react"
+import { Settings } from "lucide-react";
 
-import { Heading } from '@/components/heading'
+import { Heading } from '@/components/heading';
 
-import ProjectsList from '@/components/lists/projects_v2';
+import ProjectsList from '@/components/lists/projects';
 // import SitesListPlaceholder from "@/components/placeholders/config/sites"
 
 

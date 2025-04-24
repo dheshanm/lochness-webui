@@ -1,13 +1,13 @@
 "use client"
+import { formatDistance } from 'date-fns';
+import Link from 'next/link';
 import * as React from 'react';
 import { toast } from "sonner";
-import { formatDistance } from 'date-fns'
-import Link from 'next/link'
 
-import { Activity, Pencil, Plus, ChevronLeft } from "lucide-react"
+import { Activity, ChevronLeft, Pencil, Plus } from "lucide-react";
 
 import { SkeletonCard } from '@/components/placeholders/card';
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
 import { Project } from '@/types/projects';
 
@@ -156,7 +156,7 @@ export default function ProjectPage({
                 <div className="mt-10 text-center p-10 border border-gray-200 rounded-lg">
                     <div className="py-6">
                         <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Project Not Found</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-4">No project with ID "{projectId}" found</p>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">No project with ID `{projectId}` found</p>
                         <Button asChild variant="outline" className="mt-4">
                             <Link href="/config/projects/new" className="flex items-center gap-2">
                                 <Plus className="h-4 w-4" />

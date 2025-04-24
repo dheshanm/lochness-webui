@@ -10,6 +10,7 @@ export type Project = {
     project_name: string;
     project_is_active: boolean;
     project_metadata: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [key: string]: any;
     };
 };

@@ -1,7 +1,7 @@
 import { getConnection } from "@/lib/db";
 
-import { Site } from "@/types/sites";
 import { DBUpdateResult } from "@/types/dbUpdateResult";
+import { Site } from "@/types/sites";
 
 /**
  * Sites class provides static methods for managing site data in the database.
@@ -18,6 +18,7 @@ export class Sites {
         const query = `SELECT * FROM sites WHERE project_id = $1 ORDER BY site_id`;
         const values = [projectId];
         const { rows } = await connection.query(query, values);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const sites: Site[] = rows.map((row: any) => ({
             site_id: row.site_id,
             project_id: row.project_id,

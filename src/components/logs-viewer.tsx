@@ -1,16 +1,16 @@
 "use client"
-import * as React from 'react';
 import { LazyLog } from "@melloware/react-logviewer";
+import * as React from 'react';
 import { toast } from "sonner";
 
-import { ListOrdered, Search, WrapText } from "lucide-react"
+import { ListOrdered, Search, WrapText } from "lucide-react";
 
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
     ToggleGroup,
     ToggleGroupItem,
-} from "@/components/ui/toggle-group"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+} from "@/components/ui/toggle-group";
 
 export default function LogsViewer() {
     const [showSearch, setShowSearch] = React.useState(false);
@@ -29,6 +29,7 @@ export default function LogsViewer() {
 
         const data = await response.json();
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const logsData = data.rows.map((log: any) => {
             return log.extended_log_format;
         }).join('\n');

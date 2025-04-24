@@ -1,14 +1,10 @@
-import * as React from "react"
-import Link from "next/link"
 import { formatDistance } from 'date-fns'
-import { View } from "lucide-react"
+import Link from "next/link"
 
-import { Button } from "@/components/ui/button"
 import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
@@ -18,13 +14,10 @@ import { Project } from "@/types/projects"
 
 export type ProjectCardProps = {
     project: Project
-    showActions?: boolean 
 }
 
-export default function ProjectCard({ project, showActions = true }: ProjectCardProps) {
+export default function ProjectCard({ project }: ProjectCardProps) {
     const { project_id, project_name, project_is_active, project_metadata } = project
-
-    console.log("Project Card", project)
 
     const description = project_metadata.description || null
 
@@ -40,55 +33,42 @@ export default function ProjectCard({ project, showActions = true }: ProjectCard
         : null;
 
     return (
-        <Card className="w-[320px] bg-white dark:bg-slate-800/70 shadow-sm border border-gray-200 dark:border-emerald-900/30 transition-all hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-800">
-            <CardHeader className="pb-1">
-                <div className="flex items-center gap-2">
-                    <CardTitle className="text-xl font-medium truncate" title={project_name}>{project_name}</CardTitle>
-                    {project_is_active && Boolean(project_is_active) === true && (
-                        <div className="h-2 w-2 rounded-full bg-green-500" title="Active project"></div>
-                    )}
-                </div>
-                <CardDescription className="text-sm text-muted-foreground">
-                    Project ID: {project_id}
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                <div>
-                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Description</Label>
-                    {description ? (
-                        <p 
-                            className="mt-1 text-sm truncate overflow-hidden text-ellipsis" 
-                            title={description}
-                        >
-                            {description}
-                        </p>
-                    ) : (
-                        <p className="mt-1 text-sm italic">No description available</p>
-                    )}
-                </div>
-                <div>
-                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Created</Label>
-                    <p className="mt-1 text-sm flex items-center whitespace-nowrap overflow-hidden">
-                        <span className="truncate">{formattedCreatedAt}</span>
-                        {createdAtDistance && (
-                            <span className="ml-2 text-xs text-muted-foreground shrink-0">
-                                ({createdAtDistance})
-                            </span>
+        <Link href={`/config/projects/${project_id}`} className="w-full">
+            <Card className="aspect-square bg-white dark:bg-slate-800/70 shadow-sm border border-gray-200 dark:border-emerald-900/30 transition-all hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-800">
+                <CardHeader className="pb-1">
+                    <div className="flex items-center gap-2">
+                        <CardTitle className="text-xl font-medium truncate" title={project_name}>{project_name}</CardTitle>
+                        <div className={`h-2 w-2 rounded-full ${project_is_active ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                        {/* {project_is_active && Boolean(project_is_active) === true && (
+                        <div className="h-2 w-2 rounded-full bg-emerald-500" title="Active project"></div>
+                    )} */}
+                    </div>
+                    <CardDescription className="text-sm text-muted-foreground">
+                        Project ID: {project_id}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col justify-center flex-1 space-y-3">
+                    <div>
+                        <Label className="text-xs uppercase tracking-wide text-muted-foreground">Description</Label>
+                        {description ? (
+                            <p
+                                className="mt-1 text-sm truncate overflow-hidden text-ellipsis"
+                                title={description}
+                            >
+                                {description}
+                            </p>
+                        ) : (
+                            <p className="mt-1 text-sm text-muted-foreground">No description</p>
                         )}
-                    </p>
-                </div>
-            </CardContent>
-
-            {showActions && (
-            <CardFooter className="pt-2 border-t text-sm text-muted-foreground dark:border-emerald-900/30">
-                <Button asChild variant="link" className="text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300">
-                    <Link href={`/config/projects/${project_id}`}>
-                    <View className="h-4 w-4" />
-                        View Project
-                    </Link>
-                </Button>
-            </CardFooter>
-            )}
-        </Card>
+                    </div>
+                    {created_at && (
+                        <div>
+                            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Created At</Label>
+                            <p className="mt-1 text-sm truncate overflow-hidden text-ellipsis">{formattedCreatedAt} ({createdAtDistance})</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </Link>
     )
 }

@@ -1,7 +1,7 @@
 import { getConnection } from "@/lib/db";
 
-import { Project } from "@/types/projects";
 import { DBUpdateResult } from "@/types/dbUpdateResult";
+import { Project } from "@/types/projects";
 
 /**
  * Projects class provides static methods for managing project data in the database.
@@ -19,6 +19,7 @@ export class Projects {
         const query = `SELECT * FROM projects ORDER BY project_id LIMIT $1 OFFSET $2`;
         const values = [limit, offset];
         const { rows } = await connection.query(query, values);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const projects: Project[] = rows.map((row: any) => ({
             project_id: row.project_id,
             project_name: row.project_name,

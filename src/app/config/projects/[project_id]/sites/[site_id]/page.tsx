@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 
-import { Project } from '@/types/projects';
+// import { Project } from '@/types/projects';
 import { Site } from '@/types/sites';
 
 export default function SitePage({
@@ -27,7 +27,7 @@ export default function SitePage({
     const [projectId, setProjectId] = React.useState<string | null>(null);
     const [siteId, setSiteId] = React.useState<string | null>(null);
 
-    const [project, setProject] = React.useState<Project | null>(null);
+    // const [project, setProject] = React.useState<Project | null>(null);
     const [site, setSite] = React.useState<Site | null>(null);
 
     const [created_at, setCreatedAt] = React.useState<string | null>(null);
@@ -48,25 +48,25 @@ export default function SitePage({
         getSiteId();
     }, []);
 
-    React.useEffect(() => {
-        const fetchProject = async () => {
-            if (projectId) {
-                try {
-                    const response = await fetch(`/api/v1/projects/${projectId}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch project');
-                    }
-                    const data = await response.json();
-                    setProject(data);
-                } catch (error) {
-                    console.error(error);
-                    toast.error('Failed to fetch project');
-                }
-            }
-        }
+    // React.useEffect(() => {
+    //     const fetchProject = async () => {
+    //         if (projectId) {
+    //             try {
+    //                 const response = await fetch(`/api/v1/projects/${projectId}`);
+    //                 if (!response.ok) {
+    //                     throw new Error('Failed to fetch project');
+    //                 }
+    //                 const data = await response.json();
+    //                 setProject(data);
+    //             } catch (error) {
+    //                 console.error(error);
+    //                 toast.error('Failed to fetch project');
+    //             }
+    //         }
+    //     }
 
-        fetchProject();
-    }, [projectId]);
+    //     fetchProject();
+    // }, [projectId]);
 
     React.useEffect(() => {
         const fetchSite = async () => {

@@ -1,9 +1,8 @@
 "use client"
-import * as React from 'react'
-import { FolderDot } from "lucide-react"
+import { FolderDot } from "lucide-react";
 
-import { Heading } from '@/components/heading'
-import ProjectsList from '@/components/lists/projects_v2';
+import { Heading } from '@/components/heading';
+import ProjectsList from '@/components/lists/projects';
 
 
 export default function ProjectsPage() {

@@ -14,6 +14,7 @@ export type Site = {
     site_name: string;
     site_is_active: boolean;
     site_metadata: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [key: string]: any;
     };
 };

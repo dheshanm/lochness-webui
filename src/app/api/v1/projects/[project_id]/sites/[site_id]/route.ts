@@ -1,5 +1,4 @@
 import { Sites } from "@/lib/models/sites";
-import { Site } from "@/types/sites";
 
 /**
  * Handles the GET request to fetch sites for a given project and site ID.
