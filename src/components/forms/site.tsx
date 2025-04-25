@@ -177,7 +177,12 @@ export default function SiteForm({
                                     <FormItem>
                                         <FormLabel className="font-medium">Site ID</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Enter Site ID" {...field} className="bg-white dark:bg-slate-800" />
+                                            <Input
+                                                disabled={!!site_id}  // Edit mode
+                                                placeholder="Enter Site ID"
+                                                {...field}
+                                                className="bg-white dark:bg-slate-800"
+                                            />
                                         </FormControl>
                                         <FormDescription className="text-xs">
                                             A unique identifier for the Site (e.g., ME, LA)
