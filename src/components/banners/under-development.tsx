@@ -7,7 +7,11 @@ import {
     AlertTitle,
 } from "@/components/ui/alert"
 
-export default function UnderDevelopment() {
+interface UnderDevelopmentProps {
+    dismissable?: boolean
+}
+
+export default function UnderDevelopment({ dismissable = true }: UnderDevelopmentProps) {
     const [isVisible, setIsVisible] = useState(true)
 
     if (!isVisible) return null
@@ -19,13 +23,15 @@ export default function UnderDevelopment() {
             <AlertDescription className="text-xs">
                 This page is currently under development. Please check back later for updates.
             </AlertDescription>
-            <button 
-                onClick={() => setIsVisible(false)}
-                className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100"
-                aria-label="Dismiss"
-            >
-                <X className="h-3 w-3" />
-            </button>
+            {dismissable && (
+                <button
+                    onClick={() => setIsVisible(false)}
+                    className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100"
+                    aria-label="Dismiss"
+                >
+                    <X className="h-3 w-3" />
+                </button>
+            )}
         </Alert>
     )
 }
