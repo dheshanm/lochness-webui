@@ -1,6 +1,7 @@
 "use client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -32,6 +33,7 @@ export type FormSchema = z.infer<typeof formSchema>
 
 export default function LoginForm() {
     const [isLoading, setIsLoading] = React.useState(false)
+    const router = useRouter()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -55,8 +57,10 @@ export default function LoginForm() {
             }, {
                 onSuccess: (data) => {
                     console.log({ data });
-
                     resolve(data);
+
+                    // Redirect to the home page
+                    router.push("/");
                 },
                 onError: (error) => {
                     console.log({ error });

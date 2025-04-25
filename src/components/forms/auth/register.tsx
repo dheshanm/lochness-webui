@@ -5,6 +5,7 @@ import * as React from 'react'
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
+import { useRouter } from 'next/navigation'
 
 import { Button } from "@/components/ui/button"
 import {
@@ -36,6 +37,7 @@ export type FormSchema = z.infer<typeof formSchema>
 
 export default function RegisterForm() {
     const [isLoading, setIsLoading] = React.useState(false)
+    const router = useRouter()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -65,6 +67,9 @@ export default function RegisterForm() {
 
                     resolve(response)
                     setIsLoading(false)
+
+                    // Redirect to the login page
+                    router.push("/auth/login")
                 },
                 onError: (error) => {
                     console.log({ error })
