@@ -1,9 +1,13 @@
 "use client"
 import { UserRoundPlus } from "lucide-react"
+import * as React from 'react'
 
 import RegisterForm from '@/components/forms/auth/register'
+import useAuthRedirect from "@/hooks/redirectFromAuth"
 
 export default function RegisterPage() {
+    useAuthRedirect()
+
     return (
         <div className="container mx-auto p-6 max-w-5xl flex flex-col h-full">
             <h1 className="text-2xl font-bold mb-4 text-center">
