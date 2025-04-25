@@ -19,6 +19,12 @@ if (!connection) {
     });
 }
 
+/**
+ * Retrieves the established database connection pool.
+ *
+ * @returns The database connection pool instance.
+ * @throws {Error} If the database connection has not been initialized before calling this function.
+ */
 export function getConnection(): Pool {
     if (!connection) {
         throw new Error("Database connection is undefined");
