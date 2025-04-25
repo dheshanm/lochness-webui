@@ -206,16 +206,30 @@ export default function ProjectPage({
                     </div>
                 </>
             ) : (
-                <div className="mt-10 text-center p-10 border border-gray-200 rounded-lg">
-                    <div className="py-6">
-                        <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Project Not Found</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-4">No project with ID `{projectId}` found</p>
-                        <Button asChild variant="outline" className="mt-4">
-                            <Link href="/config/projects/new" className="flex items-center gap-2">
-                                <Plus className="h-4 w-4" />
-                                Create Project
-                            </Link>
-                        </Button>
+                <div className="container mx-auto p-6 max-w-5xl flex flex-col items-center justify-center h-full">
+                    <div className="text-center p-10 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50 w-full max-w-md">
+                        <h2 className='text-6xl font-bold text-gray-800 dark:text-gray-200 mb-4'>
+                            404
+                        </h2>
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                            Project Not Found
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                            We couldn't find a project with the ID <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs font-mono">{projectId}</code>.
+                        </p>
+                        <div className="flex flex-col sm:flex-row justify-center gap-2">
+                            <Button asChild variant="default" size="sm">
+                                <Link href="/config/projects/new" className="flex items-center gap-2">
+                                    <Plus className="h-4 w-4" />
+                                    Create New Project
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href="/config/projects" className="flex items-center gap-2">
+                                    View All Projects
+                                </Link>
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}
