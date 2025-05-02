@@ -14,10 +14,11 @@ export default function LoginPage() {
                 <LogIn className="h-8 w-8 inline-block mr-2" />
                 Login
             </h1>
-            <div className="flex-grow overflow-auto mt-4">
-                <LoginForm />
-            </div>
+            <React.Suspense fallback={<div className="text-center mt-4">Loading...</div>}>
+                <div className="flex-grow overflow-auto mt-4">
+                    <LoginForm />
+                </div>
+            </React.Suspense>
         </div>
-
     )
 }

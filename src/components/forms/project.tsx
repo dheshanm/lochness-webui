@@ -63,7 +63,6 @@ export default function ProjectForm({
                     throw new Error('Failed to fetch project')
                 }
                 const data = await response.json()
-                console.log(data)
                 setProject(data)
             } catch (error) {
                 console.error(error)
@@ -107,8 +106,6 @@ export default function ProjectForm({
         if (project) {
             body.project_metadata.created_at = project.project_metadata.created_at
         }
-
-        console.log(body)
 
         fetch(`/api/v1/projects`, {
             method: "POST",

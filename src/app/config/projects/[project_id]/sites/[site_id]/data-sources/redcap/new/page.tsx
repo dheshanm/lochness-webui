@@ -1,30 +1,29 @@
 "use client"
+import { ChevronLeft, Sprout } from "lucide-react";
+import Image from 'next/image';
+import Link from 'next/link';
 import * as React from 'react';
-import { Pencil, ChevronLeft } from "lucide-react"
-import Link from 'next/link'
 
-import { Button } from "@/components/ui/button"
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbLink,
     BreadcrumbList,
     BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 
-// import NewProjectSiteForm from "@/components/forms/new-project-site"
-import SiteForm from "@/components/forms/site"
-import useProtectPage from "@/hooks/protectPage"
+import RedcapForm from '@/components/forms/data-sources/redcap';
+import useProtectPage from "@/hooks/protectPage";
 
 type Params = Promise<{ project_id: string, site_id: string }>
 
-export default function AddProjectSite({
+export default function AddRedcapDataSource({
     params,
 }: {
     params: Params
 }) {
     useProtectPage();
-
     const [projectId, setProjectId] = React.useState<string | null>(null);
     const [siteId, setSiteId] = React.useState<string | null>(null);
 
@@ -84,9 +83,9 @@ export default function AddProjectSite({
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                    <div className="flex items-center bg-amber-100 text-amber-800 px-2.5 py-1 rounded-md text-sm font-medium">
-                                        <Pencil className="h-4 w-4 mr-1.5" />
-                                        Editing
+                                    <div className="flex items-center bg-purple-100 text-purple-800 px-2.5 py-1 rounded-md text-sm font-medium">
+                                        <Sprout className="h-4 w-4 mr-1.5" />
+                                        Creating
                                     </div>
                                 </div>
                             </div>
@@ -95,8 +94,13 @@ export default function AddProjectSite({
                 </div>
             </div>
             <div className="container mx-auto p-6 max-w-5xl flex flex-col h-full">
+                <div className="flex items-center gap-2 mb-4">
+                    <Image src="/logo/redcap.jpeg" alt="REDCap" width={32} height={32} className="rounded" />
+                    <h1 className="text-2xl font-semibold">Add REDCap Data Source</h1>
+                </div>
+
                 <div className="flex-grow overflow-auto mt-4">
-                    {projectId && <SiteForm project_id={projectId} site_id={siteId} />}
+                    {projectId && siteId && <RedcapForm project_id={projectId} site_id={siteId} instance_name={null} />}
                 </div>
             </div>
         </>

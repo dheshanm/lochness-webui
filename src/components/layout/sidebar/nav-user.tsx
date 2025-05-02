@@ -1,8 +1,8 @@
 "use client"
+// Reference:
+// https://ui.shadcn.com/blocks/sidebar
 import Link from 'next/link'
 import {
-    BadgeCheck,
-    Bell,
     ChevronsUpDown,
     LogOut,
     LogIn,

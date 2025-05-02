@@ -3,8 +3,11 @@ import * as React from 'react';
 import { toast } from "sonner";
 import { formatDistance } from 'date-fns'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation';
 
 import { Pencil, Activity } from "lucide-react"
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import {
     Breadcrumb,
@@ -18,6 +21,9 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import { Site } from '@/types/sites';
+
+import UnderDevelopment from "@/components/banners/under-development"
+import DataSourcesList from '@/components/lists/data-sources';
 
 type Params = Promise<{ project_id: string, site_id: string }>
 
@@ -33,6 +39,8 @@ export default function SitePage({
 
     const [created_at, setCreatedAt] = React.useState<string | null>(null);
     const [createdAtDistance, setCreatedAtDistance] = React.useState<string | null>(null);
+
+    const router = useRouter();
 
     React.useEffect(() => {
         const getProjectId = async () => {
@@ -64,7 +72,13 @@ export default function SitePage({
                     setCreatedAtDistance(formatDistance(new Date(data.site_metadata.created_at), new Date(), { addSuffix: true }));
                 } catch (error) {
                     console.error(error);
-                    toast.error('Failed to fetch site');
+                    toast.error("Failed to fetch site data", {
+                        description: "Redirecting to the project page.",
+                    });
+                    setTimeout(() => {
+                        router.push(`/config/projects/${projectId}`);
+                    }
+                        , 2000);
                 }
             }
         }
@@ -172,6 +186,33 @@ export default function SitePage({
 
             <div className="border-t my-6 w-full" />
 
+            <div className="flex justify-center w-full px-4">
+                <Tabs defaultValue="sources" className="w-full max-w-5xl">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="sources">Data Sources</TabsTrigger>
+                        <TabsTrigger value="sinks">Data Sinks</TabsTrigger>
+                        <TabsTrigger value="logs">Logs</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="sources" className="mt-4">
+                        <div className="p-4 border rounded-md bg-card text-card-foreground">
+                            {projectId && siteId && (
+                                <DataSourcesList project_id={projectId} site_id={siteId} />
+                            )}
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="sinks" className="mt-4">
+                        <div className="p-4 border rounded-md bg-card text-card-foreground">
+                            <p>Manage your data sinks here.</p>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="logs" className="mt-4">
+                        <div className="p-4 border rounded-md bg-card text-card-foreground">
+                            <UnderDevelopment dismissable={false} />
+                        </div>
+                    </TabsContent>
+                </Tabs>
+            </div>
         </>
     )
 }
+

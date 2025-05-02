@@ -20,8 +20,6 @@ export type SiteCardProps = {
 export default function SiteCard({ site }: SiteCardProps) {
     const { site_id, project_id, site_name, site_is_active, site_metadata } = site
 
-    console.log("Site Card", site)
-
     const description = site_metadata.description || null
 
     const created_at = site_metadata.created_at

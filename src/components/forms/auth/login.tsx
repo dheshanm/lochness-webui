@@ -19,6 +19,7 @@ import {
 
 import { Input } from "@/components/ui/input"
 import { authClient } from "@/lib/auth-client"
+import { useSearchParams } from 'next/navigation'
 
 const formSchema = z.object({
     email: z.string()
@@ -34,6 +35,12 @@ export type FormSchema = z.infer<typeof formSchema>
 export default function LoginForm() {
     const [isLoading, setIsLoading] = React.useState(false)
     const router = useRouter()
+    const searchParams = useSearchParams()
+
+    const afterLoginParam = searchParams.get('afterLogin')
+    const redirectPath = afterLoginParam ? decodeURIComponent(afterLoginParam) : '/'
+    console.log('redirect path:', redirectPath)
+
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -56,15 +63,12 @@ export default function LoginForm() {
                 rememberMe: false,
             }, {
                 onSuccess: (data) => {
-                    console.log({ data });
                     resolve(data);
-
-                    // Redirect to the home page
-                    router.push("/");
+                    // Redirect based on afterLogin prop or default to home
+                    router.push(redirectPath);
                 },
                 onError: (error) => {
                     console.log({ error });
-
                     reject(error);
                 }
             })
@@ -73,13 +77,15 @@ export default function LoginForm() {
         toast.promise(loginPromise, {
             loading: "Logging in...",
             success: () => {
+                setIsLoading(false)
                 return "Logged in successfully!";
             },
             error: () => {
+                setIsLoading(false)
                 return "Failed to log in. Please check your credentials.";
             }
-        });
-        setIsLoading(false);
+        })
+        // Removed setIsLoading(false) from here as it would run immediately
     }
 
     return (

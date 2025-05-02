@@ -215,7 +215,7 @@ export default function ProjectPage({
                             Project Not Found
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                            We couldn't find a project with the ID <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs font-mono">{projectId}</code>.
+                            We could not find a project with the ID <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs font-mono">{projectId}</code>.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-2">
                             <Button asChild variant="default" size="sm">

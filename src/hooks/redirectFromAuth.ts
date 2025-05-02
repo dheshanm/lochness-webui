@@ -58,7 +58,13 @@ const useAuthRedirect = ({
                     },
                 },
             });
-            router.push(redirectTo);
+            const timer = setTimeout(() => {
+                router.push(redirectTo);
+            }, 250); // Add a 250ms delay before redirecting
+
+            // Cleanup function to clear the timeout if the component unmounts
+            // or dependencies change before the timeout finishes
+            return () => clearTimeout(timer);
         }
     }, [session, router, message, description, redirectTo]);
 };
