@@ -18,7 +18,7 @@ import useProtectPage from "@/hooks/protectPage"
 
 type Params = Promise<{ project_id: string, site_id: string }>
 
-export default function AddProjectSite({
+export default function EditSitePage({
     params,
 }: {
     params: Params

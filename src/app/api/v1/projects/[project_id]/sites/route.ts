@@ -1,5 +1,9 @@
-import { Sites } from "@/lib/models/sites";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+
 import { Site } from "@/types/sites";
+import { Sites } from "@/lib/models/sites";
+import { Logs } from "@/lib/models/logs";
 
 /**
  * Handles the GET request to fetch all sites for a given project from the database.
@@ -55,6 +59,20 @@ export async function POST(
     request: Request,
     props: { params: Promise<{ project_id: string }> }
 ): Promise<Response> {
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({
+        headers: requestHeaders
+    })
+
+    if (!session) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+    }
+
     const params = await props.params;
     const project_id = params.project_id;
 
@@ -81,6 +99,21 @@ export async function POST(
     const result = await Sites.createOrUpdateSite(newSite);
 
     if (result.updatedRowCount !== 1) {
+        await Logs.log(
+            "WARNING",
+            {
+                method: "POST",
+                route: `/api/v1/projects/${project_id}/sites`,
+                message: "Failed to create or update site",
+                staus_code: 500,
+                project_id: project_id,
+                site_id: site_id,
+                data: newSite,
+                error: {
+                    type: "SiteDataPersistenceError",
+                    details: "The `Sites.createOrUpdateSite` method did not return the expected row count.",
+                }
+            });
         return new Response(
             JSON.stringify({ error: 'Failed to create or update site' }),
             {
@@ -92,6 +125,18 @@ export async function POST(
         );
     }
 
+    await Logs.log(
+        "INFO",
+        {
+            method: "POST",
+            route: `/api/v1/projects/${project_id}/sites`,
+            message: "Site created or updated successfully",
+            status_code: 201,
+            project_id: project_id,
+            site_id: site_id,
+            data: newSite,
+        }
+    );
     return new Response(JSON.stringify(newSite), {
         status: 201,
         headers: {

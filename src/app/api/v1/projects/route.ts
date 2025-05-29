@@ -1,5 +1,9 @@
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+
 import { Project } from "@/types/projects";
 import { Projects } from "@/lib/models/projects";
+import { Logs } from "@/lib/models/logs";
 
 /**
  * Handles the GET request to fetch Projects from the database.
@@ -44,6 +48,20 @@ export async function GET(request: Request): Promise<Response> {
  * 
  */
 export async function POST(request: Request): Promise<Response> {
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({
+        headers: requestHeaders
+    })
+    
+    if (!session) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+    }
+
     const body = await request.json();
     const { project_id, project_name, project_is_active, project_metadata } = body;
     
@@ -57,6 +75,22 @@ export async function POST(request: Request): Promise<Response> {
     const result = await Projects.createOrUpdateProject(newProject);
 
     if (result.updatedRowCount !== 1) {
+        await Logs.log(
+            "WARNING",
+            {
+                method: "POST",
+                route: `/api/v1/projects`,
+                message: "Failed to create or update project",
+                status_code: 500,
+                project_id,
+                data: newProject,
+                error: {
+                    type: "ProjectCreationOrUpdationFailed",
+                    details: "The `Projects.createOrUpdateProject` method returned a non-1 updatedRowCount, indicating the project could not be saved or updated.",
+                },
+                user_email: session?.user?.email,
+            }
+        )
         return new Response(
             JSON.stringify({
                 message: "Failed to create or update project",
@@ -66,6 +100,18 @@ export async function POST(request: Request): Promise<Response> {
         );
     }
 
+    await Logs.log(
+        "INFO",
+        {
+            method: "POST",
+            route: `/api/v1/projects`,
+            message: "Project created or updated successfully",
+            status_code: 201,
+            project_id,
+            data: newProject,
+            user_email: session?.user?.email,
+        }
+    );
     return new Response(
         JSON.stringify({
             message: "Project created or updated successfully",

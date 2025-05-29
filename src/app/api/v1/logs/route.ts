@@ -1,6 +1,8 @@
 import { getConnection } from "@/lib/db";
 import { unformatSQL } from "@/lib/query";
 
+import { Logs } from "@/lib/models/logs";
+
 /**
  * Handles the GET request to fetch Logs from the database.
  *
@@ -44,4 +46,45 @@ export async function GET(request: Request): Promise<Response> {
             'Content-Type': 'application/json',
         },
     });
+}
+
+
+export async function POST(request: Request): Promise<Response> {
+    const { log_level, log_message } = await request.json();
+
+    if (!log_level || !log_message) {
+        return new Response(JSON.stringify({ error: "Missing log_level or log_message" }), {
+            status: 400,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+    }
+
+    try {
+        // Add provenance to the log message
+        const provenance = {
+            source: "lochness-webui:api",
+        };
+        const logMessageWithProvenance = {
+            ...log_message,
+            provenance,
+        };
+
+        await Logs.log(log_level, logMessageWithProvenance);
+        return new Response(JSON.stringify({ message: "Log entry created successfully" }), {
+            status: 201,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+    } catch (error) {
+        console.error("Error inserting log entry:", error);
+        return new Response(JSON.stringify({ error: "Failed to create log entry" }), {
+            status: 500,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+    }
 }

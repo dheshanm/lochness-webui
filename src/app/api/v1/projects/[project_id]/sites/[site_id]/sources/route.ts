@@ -1,5 +1,10 @@
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+
 import { DataSources } from "@/lib/models/data-sources";
 import { DataSource } from "@/types/data-sources";
+
+import { Logs } from "@/lib/models/logs";
 
 export async function GET(
     request: Request,
@@ -31,6 +36,20 @@ export async function POST(
     request: Request,
     props: { params: Promise<{ project_id: string; site_id: string }> }
 ): Promise<Response> {
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({
+        headers: requestHeaders
+    })
+
+    if (!session) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+    }
+
     const params = await props.params;
     const project_id = params.project_id;
     const site_id = params.site_id;
@@ -79,6 +98,20 @@ export async function POST(
     const result = await DataSources.createOrUpdateDataSource(dataSource);
 
     if (!result) {
+        await Logs.log("WARNING", {
+            method: "POST",
+            route: `/api/v1/projects/${project_id}/sites/${site_id}/sources`,
+            message: "Failed to create or update data source",
+            status_code: 500,
+            project_id: project_id,
+            site_id: site_id,
+            data: dataSource,
+            user_email: session?.user?.email,
+            error: {
+                type: "DataSourcePersistenceError",
+                details: "The `DataSources.createOrUpdateDataSource` method returned a falsy value, indicating the data source could not be saved or updated.",
+            }
+        });
         return new Response(JSON.stringify({ error: "Failed to create or update data source" }), {
             status: 500,
             headers: {
@@ -87,6 +120,16 @@ export async function POST(
         });
     }
 
+    await Logs.log("INFO", {
+        method: "POST",
+        route: `/api/v1/projects/${project_id}/sites/${site_id}/sources`,
+        message: "Data source created or updated successfully",
+        status_code: 201,
+        project_id: project_id,
+        site_id: site_id,
+        data: dataSource,
+        user_email: session?.user?.email,
+    });
     return new Response(JSON.stringify(result), {
         status: 201,
         headers: {

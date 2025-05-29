@@ -3,6 +3,8 @@ import React from "react";
 import { ChevronLeft } from "lucide-react"
 import Link from 'next/link'
 import Image from 'next/image';
+import { useRouter, usePathname } from 'next/navigation';
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button"
 
@@ -30,7 +32,10 @@ export default function ShowRedcapDataSource({
     const [siteId, setSiteId] = React.useState<string | null>(null);
     const [instanceName, setInstanceName] = React.useState<string | null>(null);
 
-    const [ dataSource, setDataSource ] = React.useState<DataSource | null>(null);
+    const [dataSource, setDataSource] = React.useState<DataSource | null>(null);
+
+    const router = useRouter();
+    const pathname = usePathname();
 
     React.useEffect(() => {
         const getProjectId = async () => {
@@ -57,8 +62,26 @@ export default function ShowRedcapDataSource({
         const fetchDataSource = async () => {
             if (projectId && siteId && instanceName) {
                 const response = await fetch(`/api/v1/projects/${projectId}/sites/${siteId}/sources/${instanceName}`);
-                const data = await response.json();
-                setDataSource(data);
+
+                if (!response.ok) {
+                    // Check status code and handle errors accordingly
+                    if (response.status === 401) {
+                        // Handle unauthorized access
+                        toast.message("Unauthorized access", {
+                            duration: 5000,
+                            description: "Please log in to access this page.",
+                            action: {
+                                label: "Login",
+                                onClick: () => {
+                                    router.push(`/auth/login?afterLogin=${pathname}`);
+                                },
+                            },
+                        });
+                    }
+                } else {
+                    const data = await response.json();
+                    setDataSource(data);
+                }
             }
         };
 

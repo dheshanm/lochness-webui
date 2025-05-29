@@ -5,6 +5,7 @@ import { Heading } from '@/components/heading'
 import { Pencil } from "lucide-react"
 
 import ProjectForm from "@/components/forms/project"
+import useProtectPage from "@/hooks/protectPage"
 
 type Params = Promise<{ project_id: string }>
 
@@ -13,6 +14,7 @@ export default function EditProjectPage({
 }: {
     params: Params
 }) {
+    useProtectPage();
     const [projectId, setProjectId] = React.useState<string | null>(null);
 
     React.useEffect(() => {

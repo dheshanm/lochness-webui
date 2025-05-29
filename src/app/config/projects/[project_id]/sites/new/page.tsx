@@ -3,9 +3,10 @@ import * as React from 'react';
 import Link from 'next/link'
 import { Sprout, ChevronLeft } from "lucide-react"
 
-import SiteForm from "@/components/forms/site"
-
 import { Button } from "@/components/ui/button"
+
+import SiteForm from "@/components/forms/site"
+import useProtectPage from "@/hooks/protectPage"
 
 type Params = Promise<{ project_id: string }>
 
@@ -14,6 +15,7 @@ export default function AddProjectSite({
 }: {
     params: Params
 }) {
+    useProtectPage();
     const [projectId, setProjectId] = React.useState<string | null>(null);
 
     React.useEffect(() => {
@@ -22,7 +24,7 @@ export default function AddProjectSite({
             setProjectId(project_id);
         };
         getProjectId();
-    }, []);
+    }, [params]);
 
     return (
         <>

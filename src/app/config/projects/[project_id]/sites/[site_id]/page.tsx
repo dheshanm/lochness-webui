@@ -55,7 +55,7 @@ export default function SitePage({
 
         getProjectId();
         getSiteId();
-    }, []);
+    }, [params]);
 
     React.useEffect(() => {
         const fetchSite = async () => {
