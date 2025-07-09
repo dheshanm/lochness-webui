@@ -65,11 +65,16 @@ def test_login(page: Page):
     expect(page.locator("text=Welcome")).to_be_visible() # Assuming a welcome message after login
     print("Test passed: Login functionality works.")
 
+# Global variable to store the project_id created by test_add_new_project
+# For more complex scenarios, consider pytest fixtures or a shared state object
+created_project_id = None
+
 @pytest.mark.dependency(depends=["test_login"])
 def test_add_new_project(page: Page):
     """
     Tests the functionality of adding a new project.
     """
+    global created_project_id
     try:
         login(page) # Perform login first
 
@@ -97,6 +102,9 @@ def test_add_new_project(page: Page):
         project_id = f"TEST_PROJ_{timestamp}"
         project_name = f"Test Project - Created by Playwright - {timestamp}"
         project_description = f"Description for {project_name}"
+
+        # Store the project_id in the global variable
+        created_project_id = project_id
 
         # Fill in the project ID
         page.get_by_label("Project ID").fill(project_id)
@@ -127,4 +135,68 @@ def test_add_new_project(page: Page):
     except Exception as e:
         print(f"Test failed: {e}")
         page.screenshot(path=f"test_add_new_project_failure_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.png")
+        raise # Re-raise the exception to mark the test as failed
+
+@pytest.mark.dependency(depends=["test_add_new_project"])
+def test_add_new_site(page: Page):
+    """
+    Tests the functionality of adding a new site to the created project.
+    """
+    global created_project_id
+    if created_project_id is None:
+        pytest.skip("No project was created by test_add_new_project.")
+
+    try:
+        login(page) # Ensure logged in
+
+        print(f"Adding site to project: {created_project_id}")
+        # Navigate to the project-specific page first
+        page.goto(f"http://localhost:3000/config/projects/{created_project_id}")
+        page.wait_for_url(f"**/config/projects/{created_project_id}")
+        expect(page.get_by_text(f"Project ID: {created_project_id}")).to_be_visible() # Assert project ID is visible
+
+        # Click the 'Add Site' link
+        add_site_link = page.get_by_role("link", name="Add Site")
+        add_site_link.wait_for(state="visible", timeout=10000)
+        add_site_link.click()
+
+        # Wait for the new site form to appear
+        page.wait_for_url(f"**/config/projects/{created_project_id}/sites/new")
+        expect(page.locator("h1")).to_have_text(f"Adding Site for {created_project_id}")
+
+        # Generate unique site ID and name
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        site_id = f"TEST_SITE_{timestamp}"
+        site_name = f"Test Site - Created by Playwright - {timestamp}"
+        site_description = f"Description for {site_name}"
+
+        # Fill in the site ID
+        page.get_by_label("Site ID").fill(site_id)
+
+        # Fill in the site name
+        page.get_by_label("Site Name").fill(site_name)
+
+        # Check the 'Is Active' checkbox
+        page.get_by_label("Is Active").check()
+
+        # Fill in the site description
+        page.get_by_label("Site Description").fill(site_description)
+
+        # Submit the form
+        page.get_by_role("button", name="Create Site").click()
+
+        # Verify the site was added successfully by waiting for the site-specific URL
+        page.wait_for_url(f"**/config/projects/{created_project_id}/sites/{site_id}")
+        expect(page.get_by_text(site_name, exact=True)).to_be_visible() # Assert that the site name is visible
+        expect(page.get_by_text(site_description)).to_be_visible() # Assert description is visible
+
+        print(f"Test passed: Successfully added site '{site_name}' to project '{created_project_id}'")
+
+    except TimeoutError as e:
+        print(f"Test failed due to timeout: {e}")
+        page.screenshot(path=f"test_add_new_site_failure_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.png")
+        raise # Re-raise the exception to mark the test as failed
+    except Exception as e:
+        print(f"Test failed: {e}")
+        page.screenshot(path=f"test_add_new_site_failure_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.png")
         raise # Re-raise the exception to mark the test as failed
