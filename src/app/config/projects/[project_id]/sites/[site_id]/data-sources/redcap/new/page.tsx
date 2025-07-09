@@ -9,6 +9,7 @@ import {
     BreadcrumbItem,
     BreadcrumbLink,
     BreadcrumbList,
+    BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,12 @@ export default function AddRedcapDataSource({
                                                 >
                                                     {siteId}
                                                 </BreadcrumbLink>
+                                            </BreadcrumbItem>
+                                            <BreadcrumbSeparator className="hidden md:flex" />
+                                            <BreadcrumbItem className="hidden md:flex">
+                                                <BreadcrumbPage className="font-semibold">
+                                                    New REDCap Data Source
+                                                </BreadcrumbPage>
                                             </BreadcrumbItem>
                                         </BreadcrumbList>
                                     </Breadcrumb>
