@@ -24,6 +24,7 @@ import { Site } from '@/types/sites';
 
 import UnderDevelopment from "@/components/banners/under-development"
 import DataSourcesList from '@/components/lists/data-sources';
+import DataSinksList from '@/components/lists/data-sinks';
 
 type Params = Promise<{ project_id: string, site_id: string }>
 
@@ -202,7 +203,9 @@ export default function SitePage({
                     </TabsContent>
                     <TabsContent value="sinks" className="mt-4">
                         <div className="p-4 border rounded-md bg-card text-card-foreground">
-                            <p>Manage your data sinks here.</p>
+                            {projectId && siteId && (
+                                <DataSinksList project_id={projectId} site_id={siteId} />
+                            )}
                         </div>
                     </TabsContent>
                     <TabsContent value="logs" className="mt-4">

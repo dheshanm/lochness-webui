@@ -1,44 +1,52 @@
 "use client"
+import { ChevronLeft, Database, Sprout } from "lucide-react";
+import Image from 'next/image';
+import Link from 'next/link';
 import * as React from 'react';
-import Link from 'next/link'
-import { Sprout, ChevronLeft } from "lucide-react"
 
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbLink,
     BreadcrumbList,
-    BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
-import SiteForm from "@/components/forms/site"
-import useProtectPage from "@/hooks/protectPage"
+import useProtectPage from "@/hooks/protectPage";
+import S3Form from "@/components/forms/data-sinks/s3";
 
-type Params = Promise<{ project_id: string }>
+type Params = Promise<{ project_id: string, site_id: string }>
 
-export default function AddProjectSite({
+export default function AddS3DataSink({
     params,
 }: {
     params: Params
 }) {
     useProtectPage();
     const [projectId, setProjectId] = React.useState<string | null>(null);
+    const [siteId, setSiteId] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         const getProjectId = async () => {
             const { project_id } = await params;
             setProjectId(project_id);
         };
+
+        const getSiteId = async () => {
+            const { site_id } = await params;
+            setSiteId(site_id);
+        };
+
         getProjectId();
+        getSiteId();
     }, [params]);
 
     return (
         <>
             <div className="p-4 md:p-4 border-b">
                 <div className="max-w-screen-xl mx-auto">
-                    {projectId && (
+                    {projectId && siteId && (
                         <>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center">
@@ -48,7 +56,7 @@ export default function AddProjectSite({
                                         size="sm"
                                         className="mr-2"
                                     >
-                                        <Link href={`/config/projects`} className="flex items-center">
+                                        <Link href={`/config/projects/${projectId}/sites/${siteId}`} className="flex items-center">
                                             <ChevronLeft />
                                         </Link>
                                     </Button>
@@ -64,9 +72,11 @@ export default function AddProjectSite({
                                             </BreadcrumbItem>
                                             <BreadcrumbSeparator />
                                             <BreadcrumbItem>
-                                                <BreadcrumbPage className="font-semibold">
-                                                    New Site
-                                                </BreadcrumbPage>
+                                                <BreadcrumbLink
+                                                    href={`/config/projects/${projectId}/sites/${siteId}`}
+                                                >
+                                                    {siteId}
+                                                </BreadcrumbLink>
                                             </BreadcrumbItem>
                                         </BreadcrumbList>
                                     </Breadcrumb>
@@ -84,8 +94,14 @@ export default function AddProjectSite({
                 </div>
             </div>
             <div className="container mx-auto p-6 max-w-5xl flex flex-col h-full">
+                <div className="flex items-center gap-2 mb-4">
+                    {/* <Image src="/logo/redcap.jpeg" alt="REDCap" width={32} height={32} className="rounded" /> */}
+                    <Database className="h-6 w-6 text-purple-600" />
+                    <h1 className="text-2xl font-semibold">Add S3 Compatible Data Sink</h1>
+                </div>
+
                 <div className="flex-grow overflow-auto mt-4">
-                    {projectId && <SiteForm project_id={projectId} site_id={null} />}
+                    {projectId && siteId && <S3Form project_id={projectId} site_id={siteId} />}
                 </div>
             </div>
         </>
