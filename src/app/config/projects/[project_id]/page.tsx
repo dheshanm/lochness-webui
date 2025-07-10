@@ -4,7 +4,7 @@ import Link from 'next/link';
 import * as React from 'react';
 import { toast } from "sonner";
 
-import { Activity, ChevronLeft, Pencil, Plus } from "lucide-react";
+import { Activity, ChevronLeft, Pencil, Trash, Plus } from "lucide-react";
 
 import { SkeletonCard } from '@/components/placeholders/card';
 import { Button } from "@/components/ui/button";
@@ -81,6 +81,8 @@ export default function ProjectPage({
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    {/* Delete Button Skeleton */}
+                                    <Skeleton className="h-9 w-20 rounded bg-gray-200 dark:bg-gray-700" />
                                     {/* Edit Button Skeleton */}
                                     <Skeleton className="h-9 w-20 rounded bg-gray-200 dark:bg-gray-700" />
                                     {/* Active/Inactive Button Skeleton */}
@@ -148,12 +150,19 @@ export default function ProjectPage({
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <Button asChild variant="destructive" size="sm" className="flex items-center gap-2">
+                                        <Link href={`/config/projects/${projectId}/delete`} className="flex items-center gap-2">
+                                            <Trash className="h-4 w-4" />
+                                            <span className="hidden sm:inline">Delete</span>
+                                        </Link>
+                                    </Button>
                                     <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
                                         <Link href={`/config/projects/${projectId}/edit`} className="flex items-center gap-2">
                                             <Pencil className="h-4 w-4" />
                                             <span className="hidden sm:inline">Edit</span>
                                         </Link>
                                     </Button>
+
                                     <Button
                                         size="sm"
                                         variant={project.project_is_active ? "outline" : "secondary"}

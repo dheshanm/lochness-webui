@@ -94,4 +94,17 @@ export class Projects {
         };
         return dbUpdateResult;
     }
+
+    /**
+     * Deletes a project by its ID from the database.
+     *
+     * @param {string} projectId - The ID of the project to delete.
+     * @returns {Promise<boolean>} - A promise that resolves to true if the project was deleted, false otherwise.
+     */
+    static async deleteProject(projectId: string): Promise<boolean> {
+        const connection = getConnection();
+        const query = `DELETE FROM projects WHERE project_id = $1`;
+        const { rowCount } = await connection.query(query, [projectId]);
+        return rowCount > 0;
+    }
 }
