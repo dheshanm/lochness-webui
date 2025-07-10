@@ -1,8 +1,9 @@
 "use client"
 import { formatDistance } from 'date-fns';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import * as React from 'react';
-import { toast } from "sonner";
+import { toast } from "sonner"; // Import toast
 
 import { Activity, ChevronLeft, Pencil, Trash, Plus } from "lucide-react";
 
@@ -28,6 +29,7 @@ export default function ProjectPage({
     const [created_at, setCreatedAt] = React.useState<string | null>(null);
     const [createdAtDistance, setCreatedAtDistance] = React.useState<string | null>(null);
 
+    const router = useRouter(); // Initialize useRouter
 
     React.useEffect(() => {
         const getProjectId = async () => {
@@ -61,6 +63,34 @@ export default function ProjectPage({
 
         fetchProject();
     }, [projectId]);
+
+    const handleDelete = async () => {
+        if (!project) return; // Ensure project data is available
+
+        // Optional: Add a confirmation dialog before deleting
+        if (!confirm(`Are you sure you want to delete project ${project.project_name}?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/v1/projects/${project.project_id}`, {
+                method: 'DELETE',
+                // You might need to include headers for authentication here,
+                // e.g., 'Authorization': `Bearer ${yourAuthToken}` or session cookies
+            });
+
+            if (response.ok) {
+                toast.success(`Project ${project.project_name} deleted successfully.`);
+                router.push('/config/projects'); // Redirect to projects list after deletion
+            } else {
+                const errorData = await response.json();
+                toast.error(`Failed to delete project: ${errorData.error || response.statusText}`);
+            }
+        } catch (error) {
+            console.error('Error deleting project:', error);
+            toast.error('An unexpected error occurred during deletion.');
+        }
+    };
 
     return (
         <>
@@ -150,11 +180,15 @@ export default function ProjectPage({
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Button asChild variant="destructive" size="sm" className="flex items-center gap-2">
-                                        <Link href={`/config/projects/${projectId}/delete`} className="flex items-center gap-2">
-                                            <Trash className="h-4 w-4" />
-                                            <span className="hidden sm:inline">Delete</span>
-                                        </Link>
+                                    {/* Delete Button */}
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        className="flex items-center gap-2"
+                                        onClick={handleDelete} // Call handleDelete on click
+                                    >
+                                        <Trash className="h-4 w-4" />
+                                        <span className="hidden sm:inline">Delete</span>
                                     </Button>
                                     <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
                                         <Link href={`/config/projects/${projectId}/edit`} className="flex items-center gap-2">
