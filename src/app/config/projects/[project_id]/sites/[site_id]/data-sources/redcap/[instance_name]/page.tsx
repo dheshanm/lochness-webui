@@ -141,9 +141,13 @@ export default function ShowRedcapDataSource({
                                     </BreadcrumbItem>
                                     <BreadcrumbSeparator />
                                     <BreadcrumbItem>
-                                        <BreadcrumbLink>
-                                            Data Sources
-                                        </BreadcrumbLink>
+                                        {(projectId && siteId) ? (
+                                            <BreadcrumbLink href={`/config/projects/${projectId}/sites/${siteId}/data-sources`}>
+                                                Data Sources
+                                            </BreadcrumbLink>
+                                        ) : (
+                                            <Skeleton className="h-4 w-[150px] bg-gray-200 dark:bg-gray-700" />
+                                        )}
                                     </BreadcrumbItem>
                                     <BreadcrumbSeparator />
                                     <BreadcrumbItem>
@@ -219,7 +223,14 @@ export default function ShowRedcapDataSource({
                                         </Button>
                                     </div>
                                     <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto">
-                                        {JSON.stringify(dataSource.data_source_metadata, null, 2) || "No configuration details"}
+                                        {JSON.stringify(
+                                            {
+                                                ...dataSource.data_source_metadata,
+                                                api_token: dataSource.data_source_metadata?.api_token ? '••••••••••••••••••••' : undefined
+                                            },
+                                            null,
+                                            2
+                                        ) || "No configuration details"}
                                     </pre>
                                 </div>
                             </>

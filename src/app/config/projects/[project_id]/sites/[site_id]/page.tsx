@@ -21,9 +21,11 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import { Site } from '@/types/sites';
+import { DataSink } from '@/types/data-sinks';
 
 import UnderDevelopment from "@/components/banners/under-development"
 import DataSourcesList from '@/components/lists/data-sources';
+import { Heading } from '@/components/heading';
 
 type Params = Promise<{ project_id: string, site_id: string }>
 
@@ -39,6 +41,9 @@ export default function SitePage({
 
     const [created_at, setCreatedAt] = React.useState<string | null>(null);
     const [createdAtDistance, setCreatedAtDistance] = React.useState<string | null>(null);
+
+    const [dataSinks, setDataSinks] = React.useState<DataSink[]>([]);
+    const [loadingSinks, setLoadingSinks] = React.useState<boolean>(true);
 
     const router = useRouter();
 
@@ -113,6 +118,17 @@ export default function SitePage({
 
         fetchSite();
     }, [siteId]);
+
+    React.useEffect(() => {
+        if (projectId && siteId) {
+            setLoadingSinks(true);
+            fetch(`/api/v1/projects/${projectId}/sites/${siteId}/sinks`)
+                .then(res => res.json())
+                .then(data => setDataSinks(data))
+                .catch(() => setDataSinks([]))
+                .finally(() => setLoadingSinks(false));
+        }
+    }, [projectId, siteId]);
 
 
     return (
@@ -239,7 +255,32 @@ export default function SitePage({
                     </TabsContent>
                     <TabsContent value="sinks" className="mt-4">
                         <div className="p-4 border rounded-md bg-card text-card-foreground">
-                            <p>Manage your data sinks here.</p>
+                            <div className="flex justify-between items-center mb-4">
+                                <Heading title="Data Sinks" />
+                                {projectId && siteId && (
+                                    <Button asChild variant="outline">
+                                        <Link href={`/config/projects/${projectId}/sites/${siteId}/data-sinks/new`}>
+                                            Add Data Sink
+                                        </Link>
+                                    </Button>
+                                )}
+                            </div>
+                            {loadingSinks ? (
+                                <Skeleton className="h-8 w-full bg-gray-200 dark:bg-gray-700" />
+                            ) : dataSinks.length === 0 ? (
+                                <p className="text-gray-500">No data sinks found.</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {dataSinks.map((sink) => (
+                                        <div key={sink.data_sink_name} className="border rounded p-4 bg-muted">
+                                            <div className="font-medium">{sink.data_sink_name}</div>
+                                            <pre className="text-xs mt-2 bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto">
+                                                {JSON.stringify(sink.data_sink_metadata, null, 2)}
+                                            </pre>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </TabsContent>
                     <TabsContent value="logs" className="mt-4">

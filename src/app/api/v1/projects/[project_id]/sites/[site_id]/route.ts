@@ -42,3 +42,46 @@ export async function GET(
         },
     });
 }
+
+export async function DELETE(
+    request: Request,
+    props: { params: { site_id: string } }
+): Promise<Response> {
+    const site_id = props.params.site_id;
+
+    if (!site_id) {
+        return new Response(JSON.stringify({ error: 'Missing project_id parameter' }), {
+            status: 400,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+    }
+
+    try {
+        const deleted = await Sites.deleteSite(site_id);
+        if (deleted) {
+            return new Response(JSON.stringify({ message: 'Site deleted successfully' }), {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+        } else {
+            return new Response(JSON.stringify({ error: 'Site not found or could not be deleted' }), {
+                status: 404,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+        }
+    } catch (error) {
+        console.error("Error deleting project:", error);
+        return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+            status: 500,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+    }
+}

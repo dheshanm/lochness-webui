@@ -95,6 +95,18 @@ export default function DataSourcesList(
                                 </Link>
                             </Button>
                             <Button variant="outline">
+                                <Image src="/logo/sharepoint.png" alt="MindLAMP" width={24} height={24} className="rounded" />
+                                SharePoint
+                            </Button>
+                            <Button variant="outline">
+                                <Image src="/logo/cantab.jpg" alt="MindLAMP" width={24} height={24} className="rounded" />
+                                CANTAB
+                            </Button>
+                            <Button variant="outline">
+                                <Image src="/logo/xnat.jpeg" alt="MindLAMP" width={24} height={24} className="rounded" />
+                                XNAT
+                            </Button>
+                            <Button variant="outline">
                                 <Image src="/logo/mindLAMP.png" alt="MindLAMP" width={24} height={24} className="rounded" />
                                 MindLAMP
                             </Button>

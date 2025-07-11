@@ -99,4 +99,17 @@ export class Sites {
         };
         return updateResult;
     }
+
+    /**
+     * Deletes a site by its ID from the database.
+     *
+     * @param {Site} siteId - The ID of the site to delete.
+     * @returns {Promise<boolean>} - A promise that resolves to true if the site was deleted, false otherwise.
+     */
+    static async deleteSite(siteId: string): Promise<boolean> {
+        const connection = getConnection();
+        const query = `DELETE FROM sites WHERE site_id = $1`;
+        const { rowCount } = await connection.query(query, [siteId]);
+        return rowCount > 0;
+    }
 }
