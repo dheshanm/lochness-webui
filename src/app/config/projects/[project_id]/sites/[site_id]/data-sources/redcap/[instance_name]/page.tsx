@@ -1,8 +1,10 @@
 "use client"
 import React from "react";
 import { ChevronLeft } from "lucide-react"
+import { toast } from "sonner";
 import Link from 'next/link'
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { Button } from "@/components/ui/button"
 
@@ -15,7 +17,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { Pencil } from "lucide-react"
+import { Pencil, Trash } from "lucide-react"
 
 import { DataSource } from "@/types/data-sources";
 
@@ -31,6 +33,35 @@ export default function ShowRedcapDataSource({
     const [instanceName, setInstanceName] = React.useState<string | null>(null);
 
     const [ dataSource, setDataSource ] = React.useState<DataSource | null>(null);
+
+    const router = useRouter();
+    const handleDeleteDataSource = async () => {
+        if (!instanceName) return; // Ensure data source is available
+
+        // Optional: Add a confirmation dialog before deleting
+        if (!confirm(`Are you sure you want to delete data source ${instanceName}?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/v1/projects/${projectId}/sites/${siteId}/sources/${instanceName}`, {
+                method: 'DELETE',
+                // You might need to include headers for authentication here,
+                // e.g., 'Authorization': `Bearer ${yourAuthToken}` or session cookies
+            });
+
+            if (response.ok) {
+                toast.success(`Data source ${instanceName} deleted successfully.`);
+                router.push(`/config/projects/${projectId}/sites/${siteId}`); // Redirect to site page after deletion
+            } else {
+                const errorData = await response.json();
+                toast.error(`Failed to delete data source: ${errorData.error || response.statusText}`);
+            }
+        } catch (error) {
+            console.error('Error deleting data source:', error);
+            toast.error('An unexpected error occurred during deletion.');
+        }
+    };
 
     React.useEffect(() => {
         const getProjectId = async () => {
@@ -177,6 +208,15 @@ export default function ShowRedcapDataSource({
                                                 </Link>
                                             </Button>
                                         )}
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            className="flex items-center gap-2"
+                                            onClick={handleDeleteDataSource} // Call handleDelete on click
+                                        >
+                                            <Trash className="h-4 w-4" />
+                                            <span className="hidden sm:inline">Delete</span>
+                                        </Button>
                                     </div>
                                     <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto">
                                         {JSON.stringify(dataSource.data_source_metadata, null, 2) || "No configuration details"}
