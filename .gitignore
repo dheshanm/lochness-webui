@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Ignored by Gemini
+test_delete*.png
+tags
+__pycache__/
+.redcap_cred
+better-auth_migrations/
