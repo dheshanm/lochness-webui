@@ -46,3 +46,4 @@ tags
 __pycache__/
 .redcap_cred
 better-auth_migrations/
+test_*.png
