@@ -27,6 +27,7 @@ import UnderDevelopment from "@/components/banners/under-development"
 import DataSourcesList from '@/components/lists/data-sources';
 import SubjectsList from '@/components/lists/subjects';
 import { Heading } from '@/components/heading';
+import LogsViewer from '@/components/logs-viewer';
 
 type Params = Promise<{ project_id: string, site_id: string }>
 
@@ -303,7 +304,11 @@ export default function SitePage({
                     </TabsContent>
                     <TabsContent value="logs" className="mt-4">
                         <div className="p-4 border rounded-md bg-card text-card-foreground">
-                            <UnderDevelopment dismissable={false} />
+                            {projectId && siteId ? (
+                                <LogsViewer projectId={projectId} siteId={siteId} />
+                            ) : (
+                                <p className="text-gray-500">Loading logs...</p>
+                            )}
                         </div>
                     </TabsContent>
                 </Tabs>

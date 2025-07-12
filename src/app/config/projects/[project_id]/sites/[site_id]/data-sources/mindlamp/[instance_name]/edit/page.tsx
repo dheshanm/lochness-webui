@@ -1,94 +1,105 @@
 "use client"
-import * as React from 'react';
-import { Pencil, ChevronLeft, Trash } from "lucide-react"
-import Link from 'next/link'
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+interface Params {
+    project_id: string;
+    site_id: string;
+    instance_name: string;
+}
 
-import MindlampForm from '@/components/forms/data-sources/mindlamp';
-import useProtectPage from "@/hooks/protectPage"
+interface DataSource {
+    data_source_name: string;
+    data_source_is_active: boolean;
+    data_source_type: string;
+    data_source_metadata: {
+        keystore_name: string;
+        api_url: string;
+    };
+}
 
-type Params = Promise<{ project_id: string, site_id: string, instance_name: string }>
-
-export default function EditMindlampDataSource({
-    params,
-}: {
-    params: Params
-}) {
-    useProtectPage();
-    const [projectId, setProjectId] = React.useState<string | null>(null);
-    const [siteId, setSiteId] = React.useState<string | null>(null);
-    const [instanceName, setInstanceName] = React.useState<string | null>(null);
-
-    const [isDeleting, setIsDeleting] = React.useState<boolean>(false);
-
-    const router = useRouter()
+export default function EditMindlampDataSource({ params }: { params: Params }) {
+    const { project_id: projectId, site_id: siteId, instance_name: instanceName } = params;
+    const [dataSource, setDataSource] = React.useState<DataSource | null>(null);
+    const [loading, setLoading] = React.useState(true);
+    const [saving, setSaving] = React.useState(false);
+    const router = useRouter();
 
     React.useEffect(() => {
-        const getProjectId = async () => {
-            const { project_id } = await params;
-            setProjectId(decodeURIComponent(project_id))
+        const fetchDataSource = async () => {
+            if (projectId && siteId && instanceName) {
+                const response = await fetch(`/api/v1/projects/${projectId}/sites/${siteId}/sources/${instanceName}`);
+                const data = await response.json();
+                setDataSource(data);
+            }
+            setLoading(false);
         };
+        fetchDataSource();
+    }, [projectId, siteId, instanceName]);
 
-        const getSiteId = async () => {
-            const { site_id } = await params;
-            setSiteId(decodeURIComponent(site_id));
-        };
-
-        const getInstanceName = async () => {
-            const { instance_name } = await params;
-            setInstanceName(decodeURIComponent(instance_name));
-        };
-
-        getProjectId();
-        getSiteId();
-        getInstanceName();
-    }, [params]);
-
-    const handleDeletion = async () => {
-        if (!projectId || !siteId || !instanceName || isDeleting) {
-            return;
-        }
-        setIsDeleting(true);
+    const handleSave = async () => {
+        if (!dataSource) return;
+        
+        setSaving(true);
         try {
             const response = await fetch(`/api/v1/projects/${projectId}/sites/${siteId}/sources/${instanceName}`, {
-                method: 'DELETE',
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataSource),
             });
+
             if (response.ok) {
-                toast.success(`Data source ${instanceName} deleted successfully.`);
-                router.push(`/config/projects/${projectId}/sites/${siteId}`);
+                toast.success('Data source updated successfully');
+                router.push(`/config/projects/${projectId}/sites/${siteId}/data-sources/mindlamp/${instanceName}`);
             } else {
                 const errorData = await response.json();
-                toast.error(`Failed to delete data source: ${errorData.message || response.statusText}`);
+                toast.error('Failed to update data source', { description: errorData.error || response.statusText });
             }
         } catch (error) {
-            console.error('Error during deletion request:', error);
-            toast.error('An error occurred while trying to delete the data source.');
+            toast.error('An unexpected error occurred');
         } finally {
-            setIsDeleting(false);
+            setSaving(false);
         }
     };
+
+    const handleToggleActive = () => {
+        if (dataSource) {
+            setDataSource({
+                ...dataSource,
+                data_source_is_active: !dataSource.data_source_is_active
+            });
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="container mx-auto p-6">
+                <div className="animate-pulse">
+                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!dataSource) {
+        return (
+            <div className="container mx-auto p-6">
+                <p className="text-gray-500">Data source not found</p>
+            </div>
+        );
+    }
 
     return (
         <>
@@ -96,95 +107,97 @@ export default function EditMindlampDataSource({
                 <div className="max-w-screen-xl mx-auto">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                            <Button
-                                variant="ghost"
-                                asChild
-                                size="sm"
-                                className="mr-2"
-                            >
+                            <Button variant="ghost" asChild size="sm" className="mr-2">
                                 <Link href={`/config/projects/${projectId}/sites/${siteId}/data-sources/mindlamp/${instanceName}`} className="flex items-center">
                                     <ChevronLeft />
                                 </Link>
                             </Button>
-                            <Breadcrumb>
-                                <BreadcrumbList>
-                                    <BreadcrumbItem>
-                                        {projectId ? (
-                                            <BreadcrumbLink href={`/config/projects/${projectId}`}>{projectId}</BreadcrumbLink>
-                                        ) : (
-                                            <Skeleton className="h-4 w-[150px] bg-gray-200 dark:bg-gray-700" />
-                                        )}
-                                    </BreadcrumbItem>
-                                    <BreadcrumbSeparator />
-                                    <BreadcrumbItem>
-                                        {(projectId && siteId) ? (
-                                            <BreadcrumbLink href={`/config/projects/${projectId}/sites/${siteId}`}>{siteId}</BreadcrumbLink>
-                                        ) : (
-                                            <Skeleton className="h-4 w-[150px] bg-gray-200 dark:bg-gray-700" />
-                                        )}
-                                    </BreadcrumbItem>
-                                    <BreadcrumbSeparator />
-                                    <BreadcrumbItem>
-                                        <BreadcrumbLink>Data Sources</BreadcrumbLink>
-                                    </BreadcrumbItem>
-                                    <BreadcrumbSeparator />
-                                    <BreadcrumbItem>
-                                        {instanceName ? (
-                                            <BreadcrumbLink>{instanceName}</BreadcrumbLink>
-                                        ) : (
-                                            <Skeleton className="h-4 w-[150px] bg-gray-200 dark:bg-gray-700" />
-                                        )}
-                                    </BreadcrumbItem>
-                                </BreadcrumbList>
-                            </Breadcrumb>
+                            <div>
+                                <h1 className="text-2xl font-bold tracking-tight">Edit MindLAMP Data Source</h1>
+                                <p className="text-muted-foreground">
+                                    Update configuration for {instanceName}
+                                </p>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="flex items-center bg-amber-100 text-amber-800 px-2.5 py-1 rounded-md text-sm font-medium">
-                                <Pencil className="h-4 w-4 mr-1.5" />
-                                Editing
-                            </div>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                        <Trash className="h-4 w-4" />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Confirm Deletion</DialogTitle>
-                                        <DialogDescription>
-                                            Are you sure you want to delete the data source `{instanceName}`? This action cannot be undone.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <DialogFooter>
-                                        <DialogClose asChild>
-                                            <Button variant="outline">Cancel</Button>
-                                        </DialogClose>
-                                        <Button
-                                            variant="destructive"
-                                            onClick={handleDeletion}
-                                            disabled={isDeleting}
-                                        >
-                                            {isDeleting ? 'Deleting...' : 'Delete'}
-                                        </Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
+                            <Badge variant={dataSource.data_source_is_active ? "default" : "secondary"}>
+                                {dataSource.data_source_is_active ? "Active" : "Inactive"}
+                            </Badge>
                         </div>
                     </div>
                 </div>
             </div>
-            <div className="container mx-auto p-6 max-w-5xl flex flex-col h-full">
-                <div className="flex items-center gap-2 mb-4">
-                    <Image src="/logo/mindLAMP.png" alt="MindLAMP" width={32} height={32} className="rounded" />
-                    <h1 className="text-2xl font-semibold">Update MindLAMP Data Source</h1>
-                </div>
-                <div className="flex-grow overflow-auto mt-4">
-                    {projectId && siteId && instanceName && <MindlampForm project_id={projectId} site_id={siteId} instance_name={instanceName} />}
-                    {/* Mask sensitive info in config details if displayed */}
-                    {/* Example: <pre>{JSON.stringify({...config, api_key: '••••••••••••••••••••'}, null, 2)}</pre> */}
+
+            <div className="container mx-auto p-6 max-w-5xl flex flex-col">
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Configuration</CardTitle>
+                            <CardDescription>
+                                Update the MindLAMP data source configuration
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Keystore Name</label>
+                                    <input
+                                        type="text"
+                                        value={dataSource.data_source_metadata.keystore_name}
+                                        onChange={(e) => setDataSource({
+                                            ...dataSource,
+                                            data_source_metadata: {
+                                                ...dataSource.data_source_metadata,
+                                                keystore_name: e.target.value
+                                            }
+                                        })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">API URL</label>
+                                    <input
+                                        type="url"
+                                        value={dataSource.data_source_metadata.api_url}
+                                        onChange={(e) => setDataSource({
+                                            ...dataSource,
+                                            data_source_metadata: {
+                                                ...dataSource.data_source_metadata,
+                                                api_url: e.target.value
+                                            }
+                                        })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </div>
+                            <Separator />
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Status</label>
+                                    <p className="text-sm text-gray-500">Enable or disable this data source</p>
+                                </div>
+                                <Button
+                                    variant={dataSource.data_source_is_active ? "default" : "secondary"}
+                                    onClick={handleToggleActive}
+                                >
+                                    {dataSource.data_source_is_active ? "Active" : "Inactive"}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div className="flex justify-end gap-2">
+                        <Button variant="outline" asChild>
+                            <Link href={`/config/projects/${projectId}/sites/${siteId}/data-sources/mindlamp/${instanceName}`}>
+                                Cancel
+                            </Link>
+                        </Button>
+                        <Button onClick={handleSave} disabled={saving}>
+                            {saving ? "Saving..." : "Save Changes"}
+                        </Button>
+                    </div>
                 </div>
             </div>
         </>
-    )
+    );
 } 

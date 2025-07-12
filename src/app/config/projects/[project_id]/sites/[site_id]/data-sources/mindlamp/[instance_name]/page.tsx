@@ -1,55 +1,33 @@
 "use client"
-import React from "react";
-import { ChevronLeft } from "lucide-react"
-import { toast } from "sonner";
-import Link from 'next/link'
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
-import { Button } from "@/components/ui/button"
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Pencil, Trash } from "lucide-react"
-import { DataSource } from "@/types/data-sources";
+interface Params {
+    project_id: string;
+    site_id: string;
+    instance_name: string;
+}
 
-type Params = Promise<{ project_id: string, site_id: string, instance_name: string }>;
+interface DataSource {
+    data_source_name: string;
+    data_source_is_active: boolean;
+    data_source_type: string;
+    data_source_metadata: {
+        keystore_name: string;
+        api_url: string;
+    };
+}
 
 export default function ShowMindlampDataSource({ params }: { params: Params }) {
-    const [projectId, setProjectId] = React.useState<string | null>(null);
-    const [siteId, setSiteId] = React.useState<string | null>(null);
-    const [instanceName, setInstanceName] = React.useState<string | null>(null);
+    const { project_id: projectId, site_id: siteId, instance_name: instanceName } = params;
     const [dataSource, setDataSource] = React.useState<DataSource | null>(null);
-    const router = useRouter();
-
-    const handleDeleteDataSource = async () => {
-        if (!instanceName) return;
-        if (!confirm(`Are you sure you want to delete data source ${instanceName}?`)) return;
-        try {
-            const response = await fetch(`/api/v1/projects/${projectId}/sites/${siteId}/sources/${instanceName}`, { method: 'DELETE' });
-            if (response.ok) {
-                toast.success(`Data source ${instanceName} deleted successfully.`);
-                router.push(`/config/projects/${projectId}/sites/${siteId}`);
-            } else {
-                const errorData = await response.json();
-                toast.error(`Failed to delete data source: ${errorData.error || response.statusText}`);
-            }
-        } catch (error) {
-            toast.error('An unexpected error occurred during deletion.');
-        }
-    };
-
-    React.useEffect(() => {
-        const getProjectId = async () => { const { project_id } = await params; setProjectId(decodeURIComponent(project_id)); };
-        const getSiteId = async () => { const { site_id } = await params; setSiteId(decodeURIComponent(site_id)); };
-        const getInstanceName = async () => { const { instance_name } = await params; setInstanceName(decodeURIComponent(instance_name)); };
-        getProjectId(); getSiteId(); getInstanceName();
-    }, [params]);
+    const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
         const fetchDataSource = async () => {
@@ -58,6 +36,7 @@ export default function ShowMindlampDataSource({ params }: { params: Params }) {
                 const data = await response.json();
                 setDataSource(data);
             }
+            setLoading(false);
         };
         fetchDataSource();
     }, [projectId, siteId, instanceName]);
@@ -73,30 +52,22 @@ export default function ShowMindlampDataSource({ params }: { params: Params }) {
                                     <ChevronLeft />
                                 </Link>
                             </Button>
-                            <Breadcrumb>
-                                <BreadcrumbList>
-                                    <BreadcrumbItem>{projectId ? (<BreadcrumbLink href={`/config/projects/${projectId}`}>{projectId}</BreadcrumbLink>) : (<Skeleton className="h-4 w-[150px] bg-gray-200 dark:bg-gray-700" />)}</BreadcrumbItem>
-                                    <BreadcrumbSeparator />
-                                    <BreadcrumbItem>{(projectId && siteId) ? (<BreadcrumbLink href={`/config/projects/${projectId}/sites/${siteId}`}>{siteId}</BreadcrumbLink>) : (<Skeleton className="h-4 w-[150px] bg-gray-200 dark:bg-gray-700" />)}</BreadcrumbItem>
-                                    <BreadcrumbSeparator />
-                                    <BreadcrumbItem>
-                                        {(projectId && siteId) ? (
-                                            <BreadcrumbLink href={`/config/projects/${projectId}/sites/${siteId}`}>
-                                                Data Sources
-                                            </BreadcrumbLink>
-                                        ) : (
-                                            <span>Data Sources</span>
-                                        )}
-                                    </BreadcrumbItem>
-                                    <BreadcrumbSeparator />
-                                    <BreadcrumbItem>{instanceName ? (<BreadcrumbLink>{instanceName}</BreadcrumbLink>) : (<Skeleton className="h-4 w-[150px] bg-gray-200 dark:bg-gray-700" />)}</BreadcrumbItem>
-                                </BreadcrumbList>
-                            </Breadcrumb>
+                            <div>
+                                <h1 className="text-2xl font-bold tracking-tight">MindLAMP Data Source</h1>
+                                <p className="text-muted-foreground">
+                                    View details for {instanceName}
+                                </p>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2"></div>
+                        <div className="flex items-center gap-2">
+                            <Badge variant={dataSource?.data_source_is_active ? "default" : "secondary"}>
+                                {dataSource?.data_source_is_active ? "Active" : "Inactive"}
+                            </Badge>
+                        </div>
                     </div>
                 </div>
             </div>
+
             <div className="container mx-auto p-6 max-w-5xl flex flex-col">
                 <div className="space-y-6">
                     <div className="overflow-hidden border rounded-lg">
@@ -116,21 +87,56 @@ export default function ShowMindlampDataSource({ params }: { params: Params }) {
                                         <p className={`mt-1 font-medium ${dataSource.data_source_is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{dataSource.data_source_is_active ? 'Active' : 'Inactive'}</p>
                                     </div>
                                 </div>
-                                <div className="p-4 border-t">
-                                    <div className="mb-2 font-semibold">MindLAMP Configuration</div>
+                                <Separator />
+                                <div className="p-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div><span className="font-medium">API Key:</span> <span className="font-mono">••••••••••••••••••••</span></div>
-                                        <div><span className="font-medium">API URL:</span> <span className="font-mono">{dataSource.data_source_metadata?.api_url}</span></div>
-                                        <div><span className="font-medium">Project ID:</span> <span className="font-mono">{dataSource.data_source_metadata?.project_id}</span></div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Keystore Name</p>
+                                            <p className="mt-1 font-medium">{dataSource.data_source_metadata.keystore_name}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">API URL</p>
+                                            <p className="mt-1 font-medium break-all">{dataSource.data_source_metadata.api_url}</p>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex gap-2 p-4 border-t">
-                                    <Button variant="outline" asChild size="sm"><Link href={`/config/projects/${projectId}/sites/${siteId}/data-sources/mindlamp/${instanceName}/edit`}><Pencil className="w-4 h-4 mr-1" />Edit</Link></Button>
-                                    <Button variant="destructive" size="sm" onClick={handleDeleteDataSource}><Trash className="w-4 h-4 mr-1" />Delete</Button>
-                                </div>
                             </>
-                        ) : (<div className="p-4 text-center text-gray-500">Loading...</div>)}
+                        ) : loading ? (
+                            <div className="p-4">
+                                <div className="animate-pulse">
+                                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="p-4">
+                                <p className="text-gray-500">Data source not found</p>
+                            </div>
+                        )}
                     </div>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Actions</CardTitle>
+                            <CardDescription>
+                                Manage this MindLAMP data source
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <Button variant="outline" asChild>
+                                    <Link href={`/config/projects/${projectId}/sites/${siteId}/data-sources/mindlamp/${instanceName}/edit`}>
+                                        Edit Data Source
+                                    </Link>
+                                </Button>
+                                <Button variant="outline" asChild>
+                                    <Link href={`/config/projects/${projectId}/sites/${siteId}/data-sources/mindlamp/${instanceName}/pull`}>
+                                        Pull Data
+                                    </Link>
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </>

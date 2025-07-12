@@ -18,9 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
+    keystore_name: z.string().min(1, "Keystore Name is required"),
     api_url: z.string().url("API URL must be a valid URL"),
-    keystore_name: z.string().min(1, "Keystore name is required"),
-    project_id: z.string().min(1, "Project ID is required"),
 });
 
 export type MindlampFormSchema = z.infer<typeof formSchema>;
@@ -29,24 +28,22 @@ export default function MindlampForm({ project_id, site_id, instance_name }: { p
     const form = useForm<MindlampFormSchema>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            api_url: "",
             keystore_name: "",
-            project_id: project_id || "",
+            api_url: "",
         },
     });
 
     async function onSubmit(values: MindlampFormSchema) {
         try {
             const body = {
-                data_source_name: values.project_id, // Use project_id as instance name
+                data_source_name: values.keystore_name, // Use keystore_name as instance name
                 data_source_is_active: true,
                 site_id: site_id,
                 project_id: project_id,
                 data_source_type: "mindlamp",
                 data_source_metadata: {
-                    api_url: values.api_url,
                     keystore_name: values.keystore_name,
-                    project_id: values.project_id,
+                    api_url: values.api_url,
                 },
             };
             const response = await fetch(`/api/v1/projects/${project_id}/sites/${site_id}/sources`, {
@@ -62,7 +59,7 @@ export default function MindlampForm({ project_id, site_id, instance_name }: { p
                 return;
             }
             toast.success("MindLAMP data source created successfully");
-            window.location.href = `/config/projects/${project_id}/sites/${site_id}/data-sources/mindlamp/${values.project_id}`;
+            window.location.href = `/config/projects/${project_id}/sites/${site_id}/data-sources/mindlamp/${values.keystore_name}`;
         } catch (error) {
             toast.error("Error creating MindLAMP data source", { description: (error as Error).message });
         }
@@ -73,31 +70,15 @@ export default function MindlampForm({ project_id, site_id, instance_name }: { p
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                     control={form.control}
-                    name="api_url"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>API URL</FormLabel>
-                            <FormControl>
-                                <Input placeholder="https://api.mindlamp.com" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                                MindLAMP API URL.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
                     name="keystore_name"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Keystore Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g., mindlamp_prod_key" {...field} />
+                                <Input placeholder="mindlamp_prod" {...field} />
                             </FormControl>
                             <FormDescription>
-                                Enter the name of the secret as stored in the keystore.
+                                Name of the keystore entry for MindLAMP credentials.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -105,15 +86,15 @@ export default function MindlampForm({ project_id, site_id, instance_name }: { p
                 />
                 <FormField
                     control={form.control}
-                    name="project_id"
+                    name="api_url"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Project ID</FormLabel>
+                            <FormLabel>API URL</FormLabel>
                             <FormControl>
-                                <Input placeholder="MindLAMP Project ID" {...field} />
+                                <Input placeholder="https://mindlamp.example.com/api" {...field} />
                             </FormControl>
                             <FormDescription>
-                                MindLAMP Project ID.
+                                MindLAMP API endpoint URL.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
