@@ -1,4 +1,5 @@
 import re
+import os
 import datetime
 from playwright.sync_api import Page, expect, TimeoutError
 import requests
@@ -7,8 +8,11 @@ import requests
 USERNAME = "kevincho@bwh.harvard.edu"
 PASSWORD = "kevincho@bwh.harvard.edu"
 REDCAP_API_ADDRESS = "https://redcap.partners.org/redcap/api/"
-with open('.redcap_cred', 'r') as fp:
-    REDCAP_API_TOKEN = fp.read().strip()
+if os.path.exists('.redcap_cred'):
+    with open('.redcap_cred', 'r') as fp:
+        REDCAP_API_TOKEN = fp.read().strip()
+else:
+    REDCAP_API_TOKEN = 'TEST_REDCAP_API_TOKEN'
 
 BASE_URL = "http://localhost:3000"
 
@@ -58,11 +62,25 @@ def delete_entity(entity_type: str, project_id: str = None, site_id: str = None,
     url = ""
 
     if entity_type == "project":
+        if not project_id:
+            print("No project_id provided for project deletion.")
+            return
         url = f"{BASE_URL}/api/v1/projects/{project_id}"
     elif entity_type == "site":
+        if not project_id or not site_id:
+            print("No project_id or site_id provided for site deletion.")
+            return
         url = f"{BASE_URL}/api/v1/projects/{project_id}/sites/{site_id}"
     elif entity_type == "redcap_data_source":
+        if not project_id or not site_id or not instance_name:
+            print("Missing project_id, site_id, or instance_name for data source deletion.")
+            return
         url = f"{BASE_URL}/api/v1/projects/{project_id}/sites/{site_id}/sources/{instance_name}"
+    elif entity_type == "data_sink":
+        if not project_id or not site_id or not instance_name:
+            print("Missing project_id, site_id, or instance_name for data sink deletion.")
+            return
+        url = f"{BASE_URL}/api/v1/projects/{project_id}/sites/{site_id}/sinks/{instance_name}"
     else:
         print(f"Unknown entity type for deletion: {entity_type}")
         return
