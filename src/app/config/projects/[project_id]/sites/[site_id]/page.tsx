@@ -25,6 +25,7 @@ import { DataSink } from '@/types/data-sinks';
 
 import UnderDevelopment from "@/components/banners/under-development"
 import DataSourcesList from '@/components/lists/data-sources';
+import SubjectsList from '@/components/lists/subjects';
 import { Heading } from '@/components/heading';
 
 type Params = Promise<{ project_id: string, site_id: string }>
@@ -248,9 +249,10 @@ export default function SitePage({
 
             <div className="flex justify-center w-full px-4">
                 <Tabs defaultValue="sources" className="w-full max-w-5xl">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="sources">Data Sources</TabsTrigger>
                         <TabsTrigger value="sinks">Data Sinks</TabsTrigger>
+                        <TabsTrigger value="subjects">Subjects</TabsTrigger>
                         <TabsTrigger value="logs">Logs</TabsTrigger>
                     </TabsList>
                     <TabsContent value="sources" className="mt-4">
@@ -289,6 +291,13 @@ export default function SitePage({
                                         </div>
                                     ))}
                                 </div>
+                            )}
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="subjects" className="mt-4">
+                        <div className="p-4 border rounded-md bg-card text-card-foreground">
+                            {projectId && siteId && (
+                                <SubjectsList project_id={projectId} site_id={siteId} />
                             )}
                         </div>
                     </TabsContent>
