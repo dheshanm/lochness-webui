@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Pencil, Trash } from "lucide-react"
 
 import { DataSource } from "@/types/data-sources";
+import ReactJson from 'react-json-view';
 
 type Params = Promise<{ project_id: string, site_id: string, instance_name: string }>;
 
@@ -142,7 +143,7 @@ export default function ShowRedcapDataSource({
                                     <BreadcrumbSeparator />
                                     <BreadcrumbItem>
                                         {(projectId && siteId) ? (
-                                            <BreadcrumbLink href={`/config/projects/${projectId}/sites/${siteId}/data-sources`}>
+                                            <BreadcrumbLink href={`/config/projects/${projectId}/sites/${siteId}`}>
                                                 Data Sources
                                             </BreadcrumbLink>
                                         ) : (
@@ -222,16 +223,20 @@ export default function ShowRedcapDataSource({
                                             <span className="hidden sm:inline">Delete</span>
                                         </Button>
                                     </div>
-                                    <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto">
-                                        {JSON.stringify(
-                                            {
+                                    <div className="mt-2 text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto">
+                                        <ReactJson
+                                            src={{
                                                 ...dataSource.data_source_metadata,
                                                 api_token: dataSource.data_source_metadata?.api_token ? '••••••••••••••••••••' : undefined
-                                            },
-                                            null,
-                                            2
-                                        ) || "No configuration details"}
-                                    </pre>
+                                            }}
+                                            name={false}
+                                            collapsed={2}
+                                            enableClipboard={true}
+                                            displayDataTypes={false}
+                                            theme="rjv-default"
+                                            style={{ fontSize: '14px', borderRadius: '8px', padding: '8px', background: 'none' }}
+                                        />
+                                    </div>
                                 </div>
                             </>
                         ) : (

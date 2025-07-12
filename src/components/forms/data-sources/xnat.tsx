@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
-    api_token: z.string().min(1, "API Token is required"),
+    keystore_name: z.string().min(1, "Keystore name is required"),
     endpoint_url: z.string().url("Endpoint URL must be a valid URL"),
     subject_id_variable: z.string().min(1, "Subject ID Variable is required"),
     optional_variables_dictionary: z.array(z.object({ variable_name: z.string().min(1) })).optional(),
@@ -30,7 +30,7 @@ export default function XnatForm({ project_id, site_id, instance_name }: { proje
     const form = useForm<XnatFormSchema>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            api_token: "",
+            keystore_name: "",
             endpoint_url: "",
             subject_id_variable: "",
             optional_variables_dictionary: [],
@@ -50,7 +50,7 @@ export default function XnatForm({ project_id, site_id, instance_name }: { proje
                 project_id: project_id,
                 data_source_type: "xnat",
                 data_source_metadata: {
-                    api_token: values.api_token,
+                    keystore_name: values.keystore_name,
                     endpoint_url: values.endpoint_url,
                     subject_id_variable: values.subject_id_variable,
                     optional_variables_dictionary: values.optional_variables_dictionary || [],
@@ -80,15 +80,15 @@ export default function XnatForm({ project_id, site_id, instance_name }: { proje
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                     control={form.control}
-                    name="api_token"
+                    name="keystore_name"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>API Token</FormLabel>
+                            <FormLabel>Keystore Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="XNAT API token" {...field} />
+                                <Input placeholder="e.g., xnat_prod_token" {...field} />
                             </FormControl>
                             <FormDescription>
-                                XNAT API token for authentication.
+                                Enter the name of the secret as stored in the keystore.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>

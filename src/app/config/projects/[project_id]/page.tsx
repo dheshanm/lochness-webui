@@ -15,6 +15,9 @@ import { Project } from '@/types/projects';
 
 // import SitesListPlaceholder from "@/components/placeholders/config/sites"
 import SitesList from '@/components/lists/sites';
+import KeystoreList from '@/components/lists/keystore';
+import BatchAddToSites from '@/components/forms/batch-add-to-sites';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 type Params = Promise<{ project_id: string }>
 
@@ -28,6 +31,9 @@ export default function ProjectPage({
     const [loading, setLoading] = React.useState(true);
     const [created_at, setCreatedAt] = React.useState<string | null>(null);
     const [createdAtDistance, setCreatedAtDistance] = React.useState<string | null>(null);
+    const [showBatchSource, setShowBatchSource] = React.useState(false);
+    const [showBatchSink, setShowBatchSink] = React.useState(false);
+    const [sites, setSites] = React.useState<{ site_id: string; site_name: string }[]>([]);
 
     const router = useRouter(); // Initialize useRouter
 
@@ -50,8 +56,15 @@ export default function ProjectPage({
                     const data = await response.json();
                     setProject(data);
 
-                    setCreatedAt(new Date(data.project_metadata.created_at).toLocaleDateString());
-                    setCreatedAtDistance(formatDistance(new Date(data.project_metadata.created_at), new Date(), { addSuffix: true }));
+                    const createdAtRaw = data.project_metadata?.created_at;
+                    const createdAtDate = createdAtRaw ? new Date(createdAtRaw) : null;
+                    if (createdAtDate && !isNaN(createdAtDate.getTime())) {
+                        setCreatedAt(createdAtDate.toLocaleDateString());
+                        setCreatedAtDistance(formatDistance(createdAtDate, new Date(), { addSuffix: true }));
+                    } else {
+                        setCreatedAt("No date");
+                        setCreatedAtDistance(null);
+                    }
                 } catch (error) {
                     console.error(error);
                     toast.error('Failed to fetch project');
@@ -62,6 +75,14 @@ export default function ProjectPage({
         }
 
         fetchProject();
+    }, [projectId]);
+
+    React.useEffect(() => {
+        if (projectId) {
+            fetch(`/api/v1/projects/${projectId}/sites`).then(res => res.json()).then(data => {
+                setSites(data.map((s: any) => ({ site_id: s.site_id, site_name: s.site_name })));
+            });
+        }
     }, [projectId]);
 
     const handleDelete = async () => {
@@ -244,6 +265,52 @@ export default function ProjectPage({
                             </div>
                             <div className="mt-4">
                                 {projectId && <SitesList project_id={projectId} />}
+                            </div>
+                        </div>
+
+                        <div className="mt-8">
+                            <div className="flex justify-between items-center mb-2">
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">Keystore</h2>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Manage encrypted secrets for this project.</p>
+                                </div>
+                            </div>
+                            <div className="mt-4">
+                                {projectId && <KeystoreList project_id={projectId} />}
+                            </div>
+                        </div>
+                        <div className="mt-8">
+                            <div className="flex gap-2 mb-4">
+                                <Dialog open={showBatchSource} onOpenChange={setShowBatchSource}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" onClick={() => setShowBatchSource(true)}>
+                                            Add Data Source(s) to Multiple Sites
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Add Data Source(s) to Multiple Sites</DialogTitle>
+                                        </DialogHeader>
+                                        {projectId && sites.length > 0 && (
+                                            <BatchAddToSites mode="source" project_id={projectId} sites={sites} onSuccess={() => setShowBatchSource(false)} />
+                                        )}
+                                    </DialogContent>
+                                </Dialog>
+                                <Dialog open={showBatchSink} onOpenChange={setShowBatchSink}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" onClick={() => setShowBatchSink(true)}>
+                                            Add Data Sink(s) to Multiple Sites
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Add Data Sink(s) to Multiple Sites</DialogTitle>
+                                        </DialogHeader>
+                                        {projectId && sites.length > 0 && (
+                                            <BatchAddToSites mode="sink" project_id={projectId} sites={sites} onSuccess={() => setShowBatchSink(false)} />
+                                        )}
+                                    </DialogContent>
+                                </Dialog>
                             </div>
                         </div>
                     </div>

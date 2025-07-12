@@ -8,10 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
     data_sink_name: z.string().min(1, "Name is required"),
-    data_sink_metadata: z.string().min(2, "Metadata (JSON) is required"),
+    sink_type: z.string().min(1, "Sink type is required"),
+    keystore_name: z.string().min(1, "Keystore name is required"),
+    endpoint: z.string().optional(),
+    bucket: z.string().optional(),
+    // Add more fields as needed for other sink types
 });
 
 type FormSchema = z.infer<typeof formSchema>;
@@ -25,7 +30,10 @@ export default function AddDataSinkPage({ params }: { params: Params }) {
         resolver: zodResolver(formSchema),
         defaultValues: {
             data_sink_name: "",
-            data_sink_metadata: "{}",
+            sink_type: "minio",
+            keystore_name: "",
+            endpoint: "",
+            bucket: "",
         },
     });
 
@@ -38,18 +46,18 @@ export default function AddDataSinkPage({ params }: { params: Params }) {
 
     async function onSubmit(values: FormSchema) {
         if (!projectId || !siteId) return;
-        let metadataObj;
-        try {
-            metadataObj = JSON.parse(values.data_sink_metadata);
-        } catch (e) {
-            toast.error("Metadata must be valid JSON");
-            return;
+        // Build metadata based on sink type
+        let data_sink_metadata: Record<string, any> = { keystore_name: values.keystore_name };
+        if (values.sink_type === "minio") {
+            data_sink_metadata.endpoint = values.endpoint;
+            data_sink_metadata.bucket = values.bucket;
         }
+        // Add more sink types as needed
         const body = {
             data_sink_name: values.data_sink_name,
             site_id: siteId,
             project_id: projectId,
-            data_sink_metadata: metadataObj,
+            data_sink_metadata,
         };
         try {
             const response = await fetch(`/api/v1/projects/${projectId}/sites/${siteId}/sinks`, {
@@ -78,10 +86,37 @@ export default function AddDataSinkPage({ params }: { params: Params }) {
                     <Input {...form.register("data_sink_name")} placeholder="e.g., minio_sink" />
                 </div>
                 <div>
-                    <label className="block font-medium mb-1">Metadata (JSON)</label>
-                    <Textarea {...form.register("data_sink_metadata")} rows={6} placeholder='{"type": "minio", "endpoint": "..."}' />
-                    <p className="text-xs text-gray-500 mt-1">Enter additional configuration as JSON.</p>
+                    <label className="block font-medium mb-1">Sink Type</label>
+                    <Select {...form.register("sink_type")} onValueChange={val => form.setValue("sink_type", val)} defaultValue={form.getValues("sink_type") || "minio"}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select sink type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="minio">MinIO</SelectItem>
+                            <SelectItem value="sharepoint">SharePoint</SelectItem>
+                            {/* Add more sink types as needed */}
+                        </SelectContent>
+                    </Select>
                 </div>
+                <div>
+                    <label className="block font-medium mb-1">Keystore Name</label>
+                    <Input {...form.register("keystore_name")} placeholder="e.g., minio_prod_creds" />
+                    <p className="text-xs text-gray-500 mt-1">Reference a secret stored in the keystore.</p>
+                </div>
+                {/* MinIO fields */}
+                {form.watch("sink_type") === "minio" && (
+                    <>
+                        <div>
+                            <label className="block font-medium mb-1">Endpoint</label>
+                            <Input {...form.register("endpoint")} placeholder="e.g., https://minio.example.com" />
+                        </div>
+                        <div>
+                            <label className="block font-medium mb-1">Bucket</label>
+                            <Input {...form.register("bucket")} placeholder="e.g., my-bucket" />
+                        </div>
+                    </>
+                )}
+                {/* Add more sink type fields as needed */}
                 <div className="flex gap-2">
                     <Button type="submit">Create Data Sink</Button>
                     <Button type="button" variant="secondary" asChild>

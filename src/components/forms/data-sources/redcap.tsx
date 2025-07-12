@@ -36,8 +36,8 @@ const redcapSchema = z.object({
     endpoint_url: z.string().min(1, {
         message: "RedCAP endpoint URL is required",
     }),
-    api_token: z.string().min(1, {
-        message: "RedCAP API token is required",
+    keystore_name: z.string().min(1, {
+        message: "Keystore name is required",
     }),
     // Variable to search for subject ID
     subject_id_variable: z.string().min(1, {
@@ -79,7 +79,7 @@ export default function RedcapForm(
             start_activated: true,
             name: instance_name || "",
             endpoint_url: "",
-            api_token: "",
+            keystore_name: "",
             subject_id_variable: "",
             optional_variables_dictionary: [], // Initialize as empty array
         },
@@ -114,11 +114,10 @@ export default function RedcapForm(
                 start_activated: dataSource.data_source_is_active,
                 name: dataSource.data_source_name,
                 endpoint_url: dataSource.data_source_metadata.endpoint_url,
-                api_token: dataSource.data_source_metadata.api_token,
+                keystore_name: dataSource.data_source_metadata.keystore_name,
                 subject_id_variable: dataSource.data_source_metadata.subject_id_variable,
                 optional_variables_dictionary: dataSource.data_source_metadata.optional_variables_dictionary || [],
             })
-
             setEditMode(true)
         }
     }, [dataSource, form])
@@ -140,7 +139,7 @@ export default function RedcapForm(
                 data_source_type: "redcap",
                 data_source_metadata: {
                     endpoint_url: data.endpoint_url,
-                    api_token: data.api_token,
+                    keystore_name: data.keystore_name,
                     subject_id_variable: data.subject_id_variable,
                     optional_variables_dictionary: data.optional_variables_dictionary || [],
                 },
@@ -316,74 +315,23 @@ export default function RedcapForm(
                 />
                 <FormField
                 control={form.control}
-                name="api_token"
-                render={({ field }) => {
-                    // // Moved to Top
-                    // const [showToken, setShowToken] = React.useState(false);
-
-                    const handleCopyToken = async () => {
-                        if (!navigator.clipboard) {
-                            console.error("Clipboard API not available. Ensure you are using HTTPS or localhost.");
-                            toast.error("Clipboard access requires a secure connection (HTTPS).");
-                            return;
-                        }
-                        try {
-                            await navigator.clipboard.writeText(field.value);
-                            toast.success("API Token copied to clipboard!");
-                        } catch (err) {
-                            console.error("Failed to copy token: ", err);
-                            toast.error("Failed to copy API Token.");
-                        }
-                    };
-
-                    return (
+                name="keystore_name"
+                render={({ field }) => (
                     <FormItem>
-                        <FormLabel>RedCAP API Token</FormLabel>
-                        <div className="relative flex items-center">
-                            <FormControl>
-                                <Input
-                                type={showToken ? "text" : "password"}
-                                placeholder="Enter your REDCap API Token"
+                        <FormLabel>Keystore Name</FormLabel>
+                        <FormControl>
+                            <Input
+                                placeholder="e.g., redcap_prod_token"
                                 {...field}
-                                className="pr-20" // Add padding to prevent text overlap with buttons
-                                />
-                            </FormControl>
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 space-x-1">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setShowToken(!showToken)}
-                                    aria-label={showToken ? "Hide token" : "Show token"}
-                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                >
-                                    {showToken ? (
-                                        <EyeOff className="h-4 w-4" />
-                                    ) : (
-                                        <Eye className="h-4 w-4" />
-                                    )}
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={handleCopyToken}
-                                    disabled={!field.value}
-                                    aria-label="Copy token"
-                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                >
-                                    <Copy className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                        {/* <FormDescription>
-                            Your project-specific API token generated in REDCap. Keep this secure.
-                        </FormDescription> */}
+                            />
+                        </FormControl>
+                        <FormDescription>
+                            Enter the name of the secret as stored in the keystore.
+                        </FormDescription>
                         <FormMessage />
                     </FormItem>
-                    );
-                }}
-                />
+                )}
+            />
                 <FormField
                 control={form.control}
                 name="subject_id_variable"

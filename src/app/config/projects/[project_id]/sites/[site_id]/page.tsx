@@ -101,8 +101,15 @@ export default function SitePage({
                     const data = await response.json();
                     setSite(data);
 
-                    setCreatedAt(new Date(data.site_metadata.created_at).toLocaleDateString());
-                    setCreatedAtDistance(formatDistance(new Date(data.site_metadata.created_at), new Date(), { addSuffix: true }));
+                    const createdAtRaw = data.site_metadata?.created_at;
+                    const createdAtDate = createdAtRaw ? new Date(createdAtRaw) : null;
+                    if (createdAtDate && !isNaN(createdAtDate.getTime())) {
+                        setCreatedAt(createdAtDate.toLocaleDateString());
+                        setCreatedAtDistance(formatDistance(createdAtDate, new Date(), { addSuffix: true }));
+                    } else {
+                        setCreatedAt("No date");
+                        setCreatedAtDistance(null);
+                    }
                 } catch (error) {
                     console.error(error);
                     toast.error("Failed to fetch site data", {
@@ -273,7 +280,9 @@ export default function SitePage({
                                 <div className="space-y-4">
                                     {dataSinks.map((sink) => (
                                         <div key={sink.data_sink_name} className="border rounded p-4 bg-muted">
-                                            <div className="font-medium">{sink.data_sink_name}</div>
+                                            <Link href={`/config/projects/${projectId}/sites/${siteId}/data-sinks/${sink.data_sink_name}`} className="font-medium text-primary hover:underline">
+                                                {sink.data_sink_name}
+                                            </Link>
                                             <pre className="text-xs mt-2 bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto">
                                                 {JSON.stringify(sink.data_sink_metadata, null, 2)}
                                             </pre>

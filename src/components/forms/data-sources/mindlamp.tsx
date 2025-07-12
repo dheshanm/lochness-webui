@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
     api_url: z.string().url("API URL must be a valid URL"),
-    api_key: z.string().min(1, "API Key is required"),
+    keystore_name: z.string().min(1, "Keystore name is required"),
     project_id: z.string().min(1, "Project ID is required"),
 });
 
@@ -30,7 +30,7 @@ export default function MindlampForm({ project_id, site_id, instance_name }: { p
         resolver: zodResolver(formSchema),
         defaultValues: {
             api_url: "",
-            api_key: "",
+            keystore_name: "",
             project_id: project_id || "",
         },
     });
@@ -45,7 +45,7 @@ export default function MindlampForm({ project_id, site_id, instance_name }: { p
                 data_source_type: "mindlamp",
                 data_source_metadata: {
                     api_url: values.api_url,
-                    api_key: values.api_key,
+                    keystore_name: values.keystore_name,
                     project_id: values.project_id,
                 },
             };
@@ -89,15 +89,15 @@ export default function MindlampForm({ project_id, site_id, instance_name }: { p
                 />
                 <FormField
                     control={form.control}
-                    name="api_key"
+                    name="keystore_name"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>API Key</FormLabel>
+                            <FormLabel>Keystore Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="MindLAMP API key" {...field} />
+                                <Input placeholder="e.g., mindlamp_prod_key" {...field} />
                             </FormControl>
                             <FormDescription>
-                                MindLAMP API key for authentication.
+                                Enter the name of the secret as stored in the keystore.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
