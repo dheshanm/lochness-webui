@@ -1,5 +1,6 @@
 "use client"
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,9 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import ReactJson from 'react-json-view';
+
+// Dynamically import react-json-view with ssr: false
+const ReactJson = dynamic(() => import('react-json-view'), { ssr: false });
 
 interface Subject {
     subject_id: string;
@@ -136,6 +139,7 @@ export default function SubjectsTable({ project_id, site_id }: SubjectsTableProp
                     );
                 }
 
+                // Only render ReactJson on the client
                 return (
                     <div className="max-w-xs">
                         <ReactJson

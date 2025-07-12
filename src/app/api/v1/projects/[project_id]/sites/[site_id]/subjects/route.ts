@@ -4,15 +4,15 @@ import { Subjects } from '@/lib/models/subjects';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { project_id: string; site_id: string } }
+    context: { params: { project_id: string; site_id: string } }
 ) {
+    // Await params in case it's a Promise (Next.js dynamic API route requirement)
+    const { project_id, site_id } = await context.params;
     try {
         const session = await auth.api.getSession({ headers: request.headers });
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-
-        const { project_id, site_id } = params;
 
         try {
             const subjects = await Subjects.getSiteSubjects(project_id, site_id);
