@@ -5,7 +5,7 @@ import { formatDistance } from 'date-fns'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation';
 
-import { Pencil, Activity, Trash } from "lucide-react"
+import { Pencil, Activity, Trash, Download } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -26,6 +26,8 @@ import { DataSink } from '@/types/data-sinks';
 import UnderDevelopment from "@/components/banners/under-development"
 import DataSourcesList from '@/components/lists/data-sources';
 import SubjectsList from '@/components/lists/subjects';
+import DataPushesList from '@/components/lists/data-pushes';
+import JobsList from '@/components/lists/jobs';
 import { Heading } from '@/components/heading';
 import LogsViewer from '@/components/logs-viewer';
 
@@ -164,6 +166,99 @@ export default function SitePage({
                         </Breadcrumb>
 
                         <div className="flex items-center gap-2">
+                            {/* Pull All Data Button */}
+                            {(projectId && siteId) && (
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="flex items-center gap-2"
+                                    onClick={async () => {
+                                        try {
+                                            // First, check if we can access the jobs endpoint (authentication test)
+                                            const authTestResponse = await fetch('/api/v1/jobs?limit=1', {
+                                                credentials: 'include'
+                                            });
+                                            if (!authTestResponse.ok) {
+                                                if (authTestResponse.status === 401) {
+                                                    toast.error('Please log in to create jobs');
+                                                    return;
+                                                }
+                                                toast.error('Authentication error. Please try logging in again.');
+                                                return;
+                                            }
+                                            
+                                            // First, get all data sources for this site
+                                            const sourcesResponse = await fetch(`/api/v1/projects/${projectId}/sites/${siteId}/sources`, {
+                                                credentials: 'include'
+                                            });
+                                            if (!sourcesResponse.ok) {
+                                                const errorText = await sourcesResponse.text();
+                                                console.error('Failed to fetch data sources:', errorText);
+                                                toast.error('Failed to fetch data sources');
+                                                return;
+                                            }
+                                            const dataSources = await sourcesResponse.json();
+                                            console.log('Data sources fetched:', dataSources);
+                                            
+                                            if (!Array.isArray(dataSources) || dataSources.length === 0) {
+                                                toast.error('No data sources found for this site');
+                                                return;
+                                            }
+                                            
+                                            // Create jobs for each data source
+                                            let successCount = 0;
+                                            let errorCount = 0;
+                                            
+                                            for (const dataSource of dataSources) {
+                                                try {
+                                                    console.log('Creating job for data source:', dataSource);
+                                                    const jobResponse = await fetch('/api/v1/jobs', {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                        },
+                                                        credentials: 'include',
+                                                        body: JSON.stringify({
+                                                            job_type: 'data_pull',
+                                                            project_id: projectId,
+                                                            site_id: siteId,
+                                                            data_source_name: dataSource.data_source_name,
+                                                            job_metadata: {
+                                                                data_source_type: dataSource.data_source_type
+                                                            }
+                                                        })
+                                                    });
+                                                    
+                                                    if (jobResponse.ok) {
+                                                        const jobResult = await jobResponse.json();
+                                                        console.log('Job created successfully:', jobResult);
+                                                        successCount++;
+                                                    } else {
+                                                        const errorData = await jobResponse.json();
+                                                        console.error('Failed to create job:', errorData);
+                                                        errorCount++;
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Error creating job for data source:', dataSource, error);
+                                                    errorCount++;
+                                                }
+                                            }
+                                            
+                                            if (errorCount === 0) {
+                                                toast.success(`Created ${successCount} data pull jobs successfully`);
+                                            } else {
+                                                toast.success(`Created ${successCount} jobs, ${errorCount} failed`);
+                                            }
+                                        } catch (error) {
+                                            console.error('Error creating jobs:', error);
+                                            toast.error('Failed to create data pull jobs');
+                                        }
+                                    }}
+                                >
+                                    <Download className="h-4 w-4" />
+                                    <span>Pull All Data</span>
+                                </Button>
+                            )}
                             <Button
                                 variant="destructive"
                                 size="sm"
@@ -250,10 +345,12 @@ export default function SitePage({
 
             <div className="flex justify-center w-full px-4">
                 <Tabs defaultValue="sources" className="w-full max-w-5xl">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-6">
                         <TabsTrigger value="sources">Data Sources</TabsTrigger>
                         <TabsTrigger value="sinks">Data Sinks</TabsTrigger>
+                        <TabsTrigger value="syncs">Data Syncs</TabsTrigger>
                         <TabsTrigger value="subjects">Subjects</TabsTrigger>
+                        <TabsTrigger value="jobs">Jobs</TabsTrigger>
                         <TabsTrigger value="logs">Logs</TabsTrigger>
                     </TabsList>
                     <TabsContent value="sources" className="mt-4">
@@ -295,10 +392,24 @@ export default function SitePage({
                             )}
                         </div>
                     </TabsContent>
+                    <TabsContent value="syncs" className="mt-4">
+                        <div className="p-4 border rounded-md bg-card text-card-foreground">
+                            {projectId && siteId && (
+                                <DataPushesList project_id={projectId} site_id={siteId} />
+                            )}
+                        </div>
+                    </TabsContent>
                     <TabsContent value="subjects" className="mt-4">
                         <div className="p-4 border rounded-md bg-card text-card-foreground">
                             {projectId && siteId && (
                                 <SubjectsList project_id={projectId} site_id={siteId} />
+                            )}
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="jobs" className="mt-4">
+                        <div className="p-4 border rounded-md bg-card text-card-foreground">
+                            {projectId && siteId && (
+                                <JobsList project_id={projectId} site_id={siteId} />
                             )}
                         </div>
                     </TabsContent>

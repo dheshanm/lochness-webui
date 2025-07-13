@@ -119,7 +119,6 @@ export default function KeystoreList({ project_id }: KeystoreListProps) {
 
     return (
         <div className="space-y-6">
-
             {entries.length === 0 ? (
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-8">
@@ -139,57 +138,67 @@ export default function KeystoreList({ project_id }: KeystoreListProps) {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {entries.map((entry) => (
-                        <Card key={entry.keystore_name} className="hover:shadow-md transition-shadow">
-                            <CardHeader className="pb-3">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <CardTitle className="text-base font-medium truncate">
-                                            {entry.keystore_name}
-                                        </CardTitle>
-                                        <Badge className={`mt-2 ${getKeyTypeColor(entry.key_type)}`}>
-                                            {getKeyTypeLabel(entry.key_type)}
-                                        </Badge>
+                <>
+                    <div className="flex justify-end mb-4">
+                        <Button asChild>
+                            <Link href={`/config/projects/${project_id}/keystore/new`}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Key Store
+                            </Link>
+                        </Button>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {entries.map((entry) => (
+                            <Card key={entry.keystore_name} className="hover:shadow-md transition-shadow">
+                                <CardHeader className="pb-3">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <CardTitle className="text-base font-medium truncate">
+                                                {entry.keystore_name}
+                                            </CardTitle>
+                                            <Badge className={`mt-2 ${getKeyTypeColor(entry.key_type)}`}>
+                                                {getKeyTypeLabel(entry.key_type)}
+                                            </Badge>
+                                        </div>
                                     </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                                {entry.key_metadata?.description && (
-                                    <CardDescription className="text-sm mb-4">
-                                        {entry.key_metadata.description}
-                                    </CardDescription>
-                                )}
-                                <div className="flex items-center justify-between">
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                                        {entry.key_metadata?.created_by && (
-                                            <span>Created by {entry.key_metadata.created_by}</span>
-                                        )}
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                    {entry.key_metadata?.description && (
+                                        <CardDescription className="text-sm mb-4">
+                                            {entry.key_metadata.description}
+                                        </CardDescription>
+                                    )}
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                            {entry.key_metadata?.created_by && (
+                                                <span>Created by {entry.key_metadata.created_by}</span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center space-x-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                asChild
+                                            >
+                                                <Link href={`/config/projects/${project_id}/keystore/${entry.keystore_name}/edit`}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleDelete(entry.keystore_name)}
+                                                className="text-destructive hover:text-destructive"
+                                            >
+                                                <Trash className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center space-x-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
-                                        >
-                                            <Link href={`/config/projects/${project_id}/keystore/${entry.keystore_name}/edit`}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Link>
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleDelete(entry.keystore_name)}
-                                            className="text-destructive hover:text-destructive"
-                                        >
-                                            <Trash className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </>
             )}
         </div>
     );

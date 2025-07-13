@@ -2,6 +2,7 @@ import {
     Github,
     LayoutDashboard,
     MessageSquareWarning,
+    Clock,
 } from "lucide-react"
 
 export const navData = {
@@ -33,6 +34,11 @@ export const navData = {
                 {
                     title: "Projects",
                     url: "/config/projects",
+                    isActive: false,
+                },
+                {
+                    title: "Jobs",
+                    url: "/config/jobs",
                     isActive: false,
                 },
                 // {

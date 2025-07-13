@@ -44,7 +44,7 @@ export async function GET(request: Request): Promise<Response> {
         baseQuery += ` WHERE ${filters.join(' AND ')}`;
     }
 
-    baseQuery += ` ORDER BY log_timestamp`;
+    baseQuery += ` ORDER BY log_timestamp DESC`;
 
     const countQuery = `SELECT COUNT(*) FROM (${baseQuery}) AS total_count`;
     const countResult = await connection.query(countQuery);
