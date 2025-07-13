@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getConnection } from '@/lib/db';
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { keystore_name: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ keystore_name: string }> }) {
     try {
         const session = await auth.api.getSession({ headers: request.headers });
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        const params = await props.params;
+        const keystore_name = decodeURIComponent(params.keystore_name);
 
         const { searchParams } = new URL(request.url);
         const project_id = searchParams.get('project_id');
@@ -18,8 +18,6 @@ export async function GET(
         if (!project_id) {
             return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
         }
-
-        const keystore_name = decodeURIComponent(params.keystore_name);
 
         const connection = getConnection();
         // Fetch keystore entry (excluding encrypted key_value)
