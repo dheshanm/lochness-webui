@@ -20,7 +20,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Pencil, Trash, Download, RefreshCw } from "lucide-react"
 
 import { DataSource } from "@/types/data-sources";
-import ReactJson from 'react-json-view';
+import dynamic from 'next/dynamic';
+const ReactJson = dynamic(() => import('react-json-view'), { ssr: false });
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import JobsList from '@/components/lists/jobs';
 import { SubjectsForDataSourceTable } from '@/components/lists/subjects-table';
