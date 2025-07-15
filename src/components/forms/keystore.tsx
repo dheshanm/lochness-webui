@@ -34,6 +34,14 @@ const keystoreSchema = z.object({
     key_metadata: z.string().optional(),
     minio_access_key: z.string().optional(),
     minio_secret_key: z.string().optional(),
+    // XNAT fields
+    xnat_username: z.string().optional(),
+    xnat_password: z.string().optional(),
+    xnat_endpoint_url: z.string().optional(),
+    // SharePoint fields
+    sharepoint_client_id: z.string().optional(),
+    sharepoint_client_secret: z.string().optional(),
+    sharepoint_tenant_id: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.key_type === "minio") {
         if (!data.minio_access_key || data.minio_access_key.length === 0) {
@@ -48,6 +56,50 @@ const keystoreSchema = z.object({
                 code: z.ZodIssueCode.custom,
                 path: ["minio_secret_key"],
                 message: "MinIO Secret Key is required",
+            });
+        }
+    } else if (data.key_type === "xnat") {
+        if (!data.xnat_username || data.xnat_username.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["xnat_username"],
+                message: "XNAT ID is required",
+            });
+        }
+        if (!data.xnat_password || data.xnat_password.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["xnat_password"],
+                message: "XNAT Password is required",
+            });
+        }
+        if (!data.xnat_endpoint_url || data.xnat_endpoint_url.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["xnat_endpoint_url"],
+                message: "XNAT Endpoint URL is required",
+            });
+        }
+    } else if (data.key_type === "sharepoint") {
+        if (!data.sharepoint_client_id || data.sharepoint_client_id.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["sharepoint_client_id"],
+                message: "SharePoint Client ID is required",
+            });
+        }
+        if (!data.sharepoint_client_secret || data.sharepoint_client_secret.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["sharepoint_client_secret"],
+                message: "SharePoint Client Secret is required",
+            });
+        }
+        if (!data.sharepoint_tenant_id || data.sharepoint_tenant_id.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["sharepoint_tenant_id"],
+                message: "SharePoint Tenant ID is required",
             });
         }
     } else {
@@ -96,6 +148,7 @@ export default function KeystoreForm({
     const [showSecret, setShowSecret] = React.useState(false);
     const [editMode, setEditMode] = React.useState(false);
     const [selectedKeyType, setSelectedKeyType] = React.useState(key_type || "");
+    const [showXnatSecret, setShowXnatSecret] = React.useState(false);
 
     const form = useForm<KeystoreFormSchema>({
         resolver: zodResolver(keystoreSchema),
@@ -107,13 +160,18 @@ export default function KeystoreForm({
             key_metadata: key_metadata || "",
             minio_access_key: minio_access_key || "",
             minio_secret_key: minio_secret_key || "",
+            xnat_username: "",
+            xnat_password: "",
+            xnat_endpoint_url: "",
+            sharepoint_client_id: "",
+            sharepoint_client_secret: "",
+            sharepoint_tenant_id: "",
         },
     });
 
     React.useEffect(() => {
         if (keystore_name) {
             setEditMode(true);
-            // If in edit mode and key_type is minio, parse key_value for minio_access_key and minio_secret_key
             if (key_type === "minio" && key_value) {
                 try {
                     const parsedKeyValue = JSON.parse(key_value);
@@ -122,6 +180,26 @@ export default function KeystoreForm({
                 } catch (e) {
                     console.error("Error parsing MinIO key_value:", e);
                     toast.error("Error parsing MinIO credentials");
+                }
+            } else if (key_type === "xnat" && key_value) {
+                try {
+                    const parsedKeyValue = JSON.parse(key_value);
+                    form.setValue("xnat_username", parsedKeyValue.username || "");
+                    form.setValue("xnat_password", parsedKeyValue.password || "");
+                    form.setValue("xnat_endpoint_url", parsedKeyValue.endpoint_url || "");
+                } catch (e) {
+                    console.error("Error parsing XNAT key_value:", e);
+                    toast.error("Error parsing XNAT credentials");
+                }
+            } else if (key_type === "sharepoint" && key_value) {
+                try {
+                    const parsedKeyValue = JSON.parse(key_value);
+                    form.setValue("sharepoint_client_id", parsedKeyValue.client_id || "");
+                    form.setValue("sharepoint_client_secret", parsedKeyValue.client_secret || "");
+                    form.setValue("sharepoint_tenant_id", parsedKeyValue.tenant_id || "");
+                } catch (e) {
+                    console.error("Error parsing SharePoint key_value:", e);
+                    toast.error("Error parsing SharePoint credentials");
                 }
             }
         }
@@ -164,7 +242,7 @@ export default function KeystoreForm({
                     key_metadata: values.key_metadata ? JSON.parse(values.key_metadata) : {},
                 };
                 const url = editMode
-                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name)}`
+                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name ?? "")}`
                     : `/api/v1/keystore`;
                 const method = editMode ? "PUT" : "POST";
 
@@ -200,6 +278,99 @@ export default function KeystoreForm({
                 );
                 window.location.href = `/config/projects/${values.project_id}`;
 
+            } else if (values.key_type === "xnat") {
+                const keyMetadataStr = values.key_metadata ?? '{}';
+                body = {
+                    keystore_name: values.keystore_name,
+                    key_value: JSON.stringify({
+                        username: values.xnat_username,
+                        password: values.xnat_password,
+                        endpoint_url: values.xnat_endpoint_url,
+                        ...JSON.parse(keyMetadataStr)
+                    }),
+                    key_type: values.key_type,
+                    project_id: values.project_id,
+                    key_metadata: JSON.parse(keyMetadataStr),
+                };
+                url = editMode
+                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name ?? "")}`
+                    : `/api/v1/keystore`;
+                method = editMode ? "PUT" : "POST";
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(body),
+                });
+                let errorData: any = {};
+                if (!response.ok) {
+                    const text = await response.text();
+                    try {
+                        errorData = text ? JSON.parse(text) : {};
+                    } catch {
+                        errorData = { error: text };
+                    }
+                    toast.error("Error saving XNAT keystore entry", {
+                        description: errorData.error || response.statusText
+                    });
+                    setLoading(false);
+                    return;
+                }
+                toast.success(
+                    editMode
+                        ? "XNAT keystore entry updated successfully"
+                        : "XNAT keystore entry created successfully"
+                );
+                window.location.href = `/config/projects/${values.project_id}`;
+
+            } else if (values.key_type === "sharepoint") {
+                const keyMetadataStr = values.key_metadata ?? '{}';
+                body = {
+                    keystore_name: values.keystore_name,
+                    key_value: JSON.stringify({
+                        client_id: values.sharepoint_client_id,
+                        client_secret: values.sharepoint_client_secret,
+                        tenant_id: values.sharepoint_tenant_id,
+                        ...JSON.parse(keyMetadataStr)
+                    }),
+                    key_type: values.key_type,
+                    project_id: values.project_id,
+                    key_metadata: JSON.parse(keyMetadataStr),
+                };
+                url = editMode
+                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name ?? "")}`
+                    : `/api/v1/keystore`;
+                method = editMode ? "PUT" : "POST";
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(body),
+                });
+                let errorData: any = {};
+                if (!response.ok) {
+                    const text = await response.text();
+                    try {
+                        errorData = text ? JSON.parse(text) : {};
+                    } catch {
+                        errorData = { error: text };
+                    }
+                    toast.error("Error saving SharePoint keystore entry", {
+                        description: errorData.error || response.statusText
+                    })
+                    setLoading(false);
+                    return;
+                }
+                toast.success(
+                    editMode
+                        ? "SharePoint keystore entry updated successfully"
+                        : "SharePoint keystore entry created successfully"
+                );
+                window.location.href = `/config/projects/${values.project_id}`;
             } else {
                 // Default: single entry (non-MinIO)
                 body = {
@@ -210,7 +381,7 @@ export default function KeystoreForm({
                     key_metadata: values.key_metadata ? JSON.parse(values.key_metadata) : {},
                 };
                 const url = editMode
-                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name)}`
+                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name ?? "")}`
                     : `/api/v1/keystore`;
                 const method = editMode ? "PUT" : "POST";
 
@@ -332,23 +503,102 @@ export default function KeystoreForm({
                                 />
                             </>
                         ) : (
-                            <FormField
-                                control={form.control}
-                                name="key_value"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Secret Value</FormLabel>
-                                        <FormControl>
-                                            <Input 
-                                                type={showSecret ? "text" : "password"}
-                                                placeholder="Enter secret value"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <>
+                                <FormField
+                                    control={form.control}
+                                    name="xnat_username"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>XNAT ID</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} autoComplete="username" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="xnat_password"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>XNAT Password</FormLabel>
+                                            <FormControl>
+                                                <Input type={showXnatSecret ? "text" : "password"} {...field} autoComplete="current-password" />
+                                            </FormControl>
+                                            <Button type="button" variant="ghost" size="icon" onClick={() => setShowXnatSecret((v) => !v)}>
+                                                {showXnatSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </Button>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="xnat_endpoint_url"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>XNAT Endpoint URL</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </>
+                        )}
+                        {selectedKeyType === "sharepoint" && (
+                            <>
+                                <FormField
+                                    control={form.control}
+                                    name="sharepoint_client_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>SharePoint Client ID</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Azure App Client ID" {...field} />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The Azure AD Application (client) ID for SharePoint access.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="sharepoint_client_secret"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>SharePoint Client Secret</FormLabel>
+                                            <FormControl>
+                                                <Input type={showSecret ? "text" : "password"} placeholder="Azure App Client Secret" {...field} />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The Azure AD Application (client) secret for SharePoint access.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="sharepoint_tenant_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>SharePoint Tenant ID</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Azure Tenant ID" {...field} />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The Azure AD Tenant ID for SharePoint access.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </>
                         )}
                         <FormField
                             control={form.control}

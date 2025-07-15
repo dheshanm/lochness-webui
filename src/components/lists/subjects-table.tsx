@@ -14,7 +14,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Search, Filter, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, Search, Filter, ArrowUpDown, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -463,6 +463,9 @@ export function SubjectsForDataSourceTable({ project_id, site_id, data_source_na
         );
     }
 
+    // Add a prop or logic to detect if this is an XNAT data source
+    const isXnat = data_source_name.toLowerCase().includes('xnat');
+
     if (loading) {
         return <div className="space-y-4"><Skeleton className="h-6 w-32" /><Skeleton className="h-10 w-64" />
             {[...Array(5)].map((_, i) => (<Skeleton key={i} className="h-12 w-full" />))}
@@ -490,6 +493,7 @@ export function SubjectsForDataSourceTable({ project_id, site_id, data_source_na
                                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Push Status</th>
                                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Last Push</th>
                                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Push File Count</th>
+                                {isXnat && <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Actions</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -531,6 +535,34 @@ export function SubjectsForDataSourceTable({ project_id, site_id, data_source_na
                                         </td>
                                         <td className="p-4">{lastPush ? new Date(lastPush.push_timestamp).toLocaleString() : '-'}</td>
                                         <td className="p-4">{pushes.length}</td>
+                                        {isXnat && (
+                                            <td className="p-4">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="flex items-center gap-1"
+                                                    title="Force Pull Data from XNAT"
+                                                    onClick={async () => {
+                                                        try {
+                                                            const res = await fetch(`/api/v1/projects/${project_id}/sites/${site_id}/data-sources/xnat/${data_source_name}/subjects/${subject.subject_id}/force-pull`, {
+                                                                method: 'POST',
+                                                                credentials: 'include',
+                                                            });
+                                                            if (res.ok) {
+                                                                toast.success(`Force pull started for subject ${subject.subject_id}`);
+                                                            } else {
+                                                                const err = await res.json();
+                                                                toast.error(`Failed to force pull: ${err.error || res.statusText}`);
+                                                            }
+                                                        } catch (e) {
+                                                            toast.error('Error triggering force pull');
+                                                        }
+                                                    }}
+                                                >
+                                                    <RefreshCw className="w-4 h-4 mr-1" /> Force Pull Data
+                                                </Button>
+                                            </td>
+                                        )}
                                     </tr>
                                 );
                             })}

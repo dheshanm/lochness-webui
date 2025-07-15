@@ -15,7 +15,7 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Pencil, Trash } from "lucide-react"
+import { Pencil, Trash, RefreshCw } from "lucide-react"
 import { DataSource } from "@/types/data-sources";
 import { SubjectsForDataSourceTable } from '@/components/lists/subjects-table';
 
@@ -131,6 +131,42 @@ export default function ShowXnatDataSource({ params }: { params: Params }) {
                                 <div className="flex gap-2 p-4 border-t">
                                     <Button variant="outline" asChild size="sm"><Link href={`/config/projects/${projectId}/sites/${siteId}/data-sources/xnat/${instanceName}/edit`}><Pencil className="w-4 h-4 mr-1" />Edit</Link></Button>
                                     <Button variant="destructive" size="sm" onClick={handleDeleteDataSource}><Trash className="w-4 h-4 mr-1" />Delete</Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex items-center gap-2"
+                                        onClick={async () => {
+                                            try {
+                                                const response = await fetch('/api/v1/jobs', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                    },
+                                                    credentials: 'include',
+                                                    body: JSON.stringify({
+                                                        job_type: 'data_pull',
+                                                        project_id: projectId,
+                                                        site_id: siteId,
+                                                        data_source_name: instanceName,
+                                                        job_metadata: {
+                                                            data_source_type: 'xnat'
+                                                        }
+                                                    })
+                                                });
+                                                if (response.ok) {
+                                                    const result = await response.json();
+                                                    toast.success(`Data pull job created successfully (Job ID: ${result.job_id})`);
+                                                } else {
+                                                    const errorData = await response.json();
+                                                    toast.error(`Failed to create data pull job: ${errorData.error || response.statusText}`);
+                                                }
+                                            } catch (error) {
+                                                toast.error('An unexpected error occurred while creating the data pull job.');
+                                            }
+                                        }}
+                                    >
+                                        <RefreshCw className="w-4 h-4 mr-1" /> Pull Data
+                                    </Button>
                                 </div>
                             </>
                         ) : (<div className="p-4 text-center text-gray-500">Loading...</div>)}

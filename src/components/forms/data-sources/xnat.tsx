@@ -18,9 +18,9 @@ import {
 import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
+    data_source_name: z.string().min(1, "Data Source Name is required"),
     keystore_name: z.string().min(1, "Keystore name is required"),
     endpoint_url: z.string().url("Endpoint URL must be a valid URL"),
-    subject_id_variable: z.string().min(1, "Subject ID Variable is required"),
     optional_variables_dictionary: z.array(z.object({ variable_name: z.string().min(1) })).optional(),
 });
 
@@ -30,9 +30,9 @@ export default function XnatForm({ project_id, site_id, instance_name }: { proje
     const form = useForm<XnatFormSchema>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            data_source_name: "",
             keystore_name: "",
             endpoint_url: "",
-            subject_id_variable: "",
             optional_variables_dictionary: [],
         },
     });
@@ -44,7 +44,7 @@ export default function XnatForm({ project_id, site_id, instance_name }: { proje
     async function onSubmit(values: XnatFormSchema) {
         try {
             const body = {
-                data_source_name: values.subject_id_variable, // Use subject_id_variable as instance name (or choose a better unique field if needed)
+                data_source_name: values.data_source_name,
                 data_source_is_active: true,
                 site_id: site_id,
                 project_id: project_id,
@@ -52,7 +52,6 @@ export default function XnatForm({ project_id, site_id, instance_name }: { proje
                 data_source_metadata: {
                     keystore_name: values.keystore_name,
                     endpoint_url: values.endpoint_url,
-                    subject_id_variable: values.subject_id_variable,
                     optional_variables_dictionary: values.optional_variables_dictionary || [],
                 },
             };
@@ -69,7 +68,7 @@ export default function XnatForm({ project_id, site_id, instance_name }: { proje
                 return;
             }
             toast.success("XNAT data source created successfully");
-            window.location.href = `/config/projects/${project_id}/sites/${site_id}/data-sources/xnat/${values.subject_id_variable}`;
+            window.location.href = `/config/projects/${project_id}/sites/${site_id}/data-sources/xnat/${values.data_source_name}`;
         } catch (error) {
             toast.error("Error creating XNAT data source", { description: (error as Error).message });
         }
@@ -78,6 +77,22 @@ export default function XnatForm({ project_id, site_id, instance_name }: { proje
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="data_source_name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Data Source Name</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., xnat_instance1" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                                Enter a unique name for this XNAT data source instance.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="keystore_name"
@@ -105,22 +120,6 @@ export default function XnatForm({ project_id, site_id, instance_name }: { proje
                             </FormControl>
                             <FormDescription>
                                 XNAT server endpoint URL.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="subject_id_variable"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Subject ID Variable</FormLabel>
-                            <FormControl>
-                                <Input placeholder="subject_id" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                                Variable name for subject ID in XNAT.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
