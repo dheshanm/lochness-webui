@@ -37,6 +37,8 @@ export default function LogsViewer({ projectId, siteId }: LogsViewerProps) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [search, setSearch] = React.useState('');
+    const [page, setPage] = React.useState(0);
+    const pageSize = 20;
 
     const fetchLogs = async () => {
         setLoading(true);
@@ -123,13 +125,21 @@ export default function LogsViewer({ projectId, siteId }: LogsViewerProps) {
         },
     });
 
+    // Filtered and paginated rows
+    const filteredRows = table.getRowModel().rows.filter(row =>
+        search === '' ||
+        Object.values(row.original).some(val => (val || '').toString().toLowerCase().includes(search.toLowerCase()))
+    );
+    const pageCount = Math.ceil(filteredRows.length / pageSize);
+    const pagedRows = filteredRows.slice(page * pageSize, (page + 1) * pageSize);
+
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
                 <Input
                     placeholder="Search logs..."
                     value={search}
-                    onChange={e => setSearch(e.target.value)}
+                    onChange={e => { setSearch(e.target.value); setPage(0); }}
                     className="w-64"
                 />
                 <Button onClick={fetchLogs} disabled={loading} size="sm" variant="outline">Refresh</Button>
@@ -150,28 +160,40 @@ export default function LogsViewer({ projectId, siteId }: LogsViewerProps) {
                     <tbody>
                         {loading ? (
                             <tr><td colSpan={columns.length} className="text-center py-8">Loading logs...</td></tr>
-                        ) : logs.length === 0 ? (
+                        ) : filteredRows.length === 0 ? (
                             <tr><td colSpan={columns.length} className="text-center py-8">No logs found.</td></tr>
                         ) : (
-                            table.getRowModel().rows
-                                .filter(row =>
-                                    search === '' ||
-                                    Object.values(row.original).some(val =>
-                                        (val || '').toString().toLowerCase().includes(search.toLowerCase())
-                                    )
-                                )
-                                .map(row => (
-                                    <tr key={row.id} className="border-b hover:bg-muted/50">
-                                        {row.getVisibleCells().map(cell => (
-                                            <td key={cell.id} className="px-2 py-1 align-top">
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))
+                            pagedRows.map(row => (
+                                <tr key={row.id} className="border-b hover:bg-muted/50">
+                                    {row.getVisibleCells().map(cell => (
+                                        <td key={cell.id} className="px-2 py-1 align-top">
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))
                         )}
                     </tbody>
                 </table>
+            </div>
+            <div className="flex justify-between items-center mt-2">
+                <button
+                    className="px-3 py-1 rounded border bg-muted text-xs disabled:opacity-50"
+                    onClick={() => setPage(Math.max(0, page - 1))}
+                    disabled={page === 0}
+                >
+                    Previous
+                </button>
+                <span className="text-xs">
+                    Page {page + 1} of {pageCount}
+                </span>
+                <button
+                    className="px-3 py-1 rounded border bg-muted text-xs disabled:opacity-50"
+                    onClick={() => setPage(Math.min(pageCount - 1, page + 1))}
+                    disabled={page >= pageCount - 1}
+                >
+                    Next
+                </button>
             </div>
         </div>
     );
