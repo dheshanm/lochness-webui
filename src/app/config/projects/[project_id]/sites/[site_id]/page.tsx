@@ -31,6 +31,7 @@ import JobsList from '@/components/lists/jobs';
 import { Heading } from '@/components/heading';
 import LogsTable from '@/components/lists/logs-table';
 import DataSyncsTable from '@/components/lists/data-syncs-table';
+import DataSinksList from '@/components/lists/data-sinks';
 
 
 import { SortingState } from "@tanstack/react-table";
@@ -442,33 +443,8 @@ export default function SitePage({
                     </TabsContent>
                     <TabsContent value="sinks" className="mt-4">
                         <div className="p-4 border rounded-md bg-card text-card-foreground">
-                            <div className="flex justify-between items-center mb-4">
-                                <Heading title="Data Sinks" />
-                                {projectId && siteId && (
-                                    <Button asChild variant="outline">
-                                        <Link href={`/config/projects/${projectId}/sites/${siteId}/data-sinks/new`}>
-                                            Add Data Sink
-                                        </Link>
-                                    </Button>
-                                )}
-                            </div>
-                            {loadingSinks ? (
-                                <Skeleton className="h-8 w-full bg-gray-200 dark:bg-gray-700" />
-                            ) : dataSinks.length === 0 ? (
-                                <p className="text-gray-500">No data sinks found.</p>
-                            ) : (
-                                <div className="space-y-4">
-                                    {dataSinks.map((sink) => (
-                                        <div key={sink.data_sink_name} className="border rounded p-4 bg-muted">
-                                            <Link href={`/config/projects/${projectId}/sites/${siteId}/data-sinks/${sink.data_sink_name}`} className="font-medium text-primary hover:underline">
-                                                {sink.data_sink_name}
-                                            </Link>
-                                            <pre className="text-xs mt-2 bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto">
-                                                {JSON.stringify(sink.data_sink_metadata, null, 2)}
-                                            </pre>
-                                        </div>
-                                    ))}
-                                </div>
+                            {projectId && siteId && (
+                                <DataSinksList project_id={projectId} site_id={siteId} />
                             )}
                         </div>
                     </TabsContent>
