@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Pencil, Trash } from "lucide-react"
 import { DataSource } from "@/types/data-sources";
+import { SubjectsForDataSourceTable } from '@/components/lists/subjects-table';
 
 type Params = Promise<{ project_id: string, site_id: string, instance_name: string }>;
 
@@ -133,6 +134,10 @@ export default function ShowXnatDataSource({ params }: { params: Params }) {
                                 </div>
                             </>
                         ) : (<div className="p-4 text-center text-gray-500">Loading...</div>)}
+                    </div>
+                    <div className="border-t my-6 w-full" />
+                    <div className="flex justify-center w-full px-4">
+                        <SubjectsForDataSourceTable project_id={projectId || ''} site_id={siteId || ''} data_source_name={instanceName || ''} />
                     </div>
                 </div>
             </div>

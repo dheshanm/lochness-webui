@@ -23,6 +23,7 @@ import { DataSource } from "@/types/data-sources";
 import ReactJson from 'react-json-view';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import JobsList from '@/components/lists/jobs';
+import { SubjectsForDataSourceTable } from '@/components/lists/subjects-table';
 
 type Params = Promise<{ project_id: string, site_id: string, instance_name: string }>;
 
@@ -264,8 +265,9 @@ export default function ShowRedcapDataSource({
 
             <div className="flex justify-center w-full px-4">
                 <Tabs defaultValue="details" className="w-full max-w-5xl">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="details">Details</TabsTrigger>
+                        <TabsTrigger value="subjects">Subjects & Status</TabsTrigger>
                         <TabsTrigger value="jobs">Jobs</TabsTrigger>
                     </TabsList>
                     <TabsContent value="details" className="mt-4">
@@ -368,6 +370,11 @@ export default function ShowRedcapDataSource({
                                 </div>
                             </div>
                         </div>
+                    </TabsContent>
+                    <TabsContent value="subjects" className="mt-4">
+                        {projectId && siteId && instanceName && (
+                            <SubjectsForDataSourceTable project_id={projectId} site_id={siteId} data_source_name={instanceName} />
+                        )}
                     </TabsContent>
                     <TabsContent value="jobs" className="mt-4">
                         <div className="p-4 border rounded-md bg-card text-card-foreground">

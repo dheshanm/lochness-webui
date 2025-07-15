@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { SubjectsForDataSourceTable } from '@/components/lists/subjects-table';
 
 interface Params {
     project_id: string;
@@ -114,29 +115,10 @@ export default function ShowMindlampDataSource({ params }: { params: Params }) {
                             </div>
                         )}
                     </div>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Actions</CardTitle>
-                            <CardDescription>
-                                Manage this MindLAMP data source
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex flex-col sm:flex-row gap-2">
-                                <Button variant="outline" asChild>
-                                    <Link href={`/config/projects/${projectId}/sites/${siteId}/data-sources/mindlamp/${instanceName}/edit`}>
-                                        Edit Data Source
-                                    </Link>
-                                </Button>
-                                <Button variant="outline" asChild>
-                                    <Link href={`/config/projects/${projectId}/sites/${siteId}/data-sources/mindlamp/${instanceName}/pull`}>
-                                        Pull Data
-                                    </Link>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="border-t my-6 w-full" />
+                    <div className="flex justify-center w-full px-4">
+                        <SubjectsForDataSourceTable project_id={projectId} site_id={siteId} data_source_name={instanceName} />
+                    </div>
                 </div>
             </div>
         </>

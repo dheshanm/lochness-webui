@@ -27,6 +27,7 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
+import Link from 'next/link';
 
 // Dynamically import react-json-view with ssr: false
 const ReactJson = dynamic(() => import('react-json-view'), { ssr: false });
@@ -92,7 +93,12 @@ export default function SubjectsTable({ project_id, site_id }: SubjectsTableProp
             },
             cell: ({ row }) => (
                 <div className="font-mono font-medium">
-                    {row.getValue("subject_id")}
+                    <Link
+                        href={`/config/projects/${row.original.project_id}/sites/${row.original.site_id}/subjects/${row.original.subject_id}`}
+                        className="text-blue-600 hover:underline"
+                    >
+                        {row.getValue("subject_id")}
+                    </Link>
                 </div>
             ),
         },
@@ -343,6 +349,193 @@ export default function SubjectsTable({ project_id, site_id }: SubjectsTableProp
                     >
                         <ChevronRight className="h-4 w-4" />
                     </Button>
+                </div>
+            </div>
+        </div>
+    );
+} 
+
+// New: SubjectsForDataSourceTable
+import { DataPush } from '@/types/data-pushes';
+
+// Add types for pulls and files
+interface DataPull {
+    data_pull_id: number;
+    subject_id: string;
+    data_source_name: string;
+    site_id: string;
+    project_id: string;
+    file_path: string;
+    file_md5: string;
+    pull_time_s: number;
+    pull_timestamp: string;
+    pull_metadata: Record<string, any>;
+}
+interface FileRow {
+    file_path: string;
+    file_md5: string;
+    file_size_mb: number;
+    m_time: string;
+    subject_id?: string;
+    data_source_name?: string;
+}
+
+interface SubjectsForDataSourceTableProps {
+    project_id: string;
+    site_id: string;
+    data_source_name: string;
+}
+
+export function SubjectsForDataSourceTable({ project_id, site_id, data_source_name }: SubjectsForDataSourceTableProps) {
+    const [subjects, setSubjects] = React.useState<Subject[]>([]);
+    const [dataPushes, setDataPushes] = React.useState<DataPush[]>([]);
+    const [dataPulls, setDataPulls] = React.useState<DataPull[]>([]);
+    const [files, setFiles] = React.useState<FileRow[]>([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        async function fetchAll() {
+            setLoading(true);
+            try {
+                const [subjectsRes, pushesRes, pullsRes, filesRes] = await Promise.all([
+                    fetch(`/api/v1/projects/${project_id}/sites/${site_id}/subjects`),
+                    fetch(`/api/v1/projects/${project_id}/sites/${site_id}/data-pushes`),
+                    fetch(`/api/v1/projects/${project_id}/sites/${site_id}/data-pulls`),
+                    fetch(`/api/v1/projects/${project_id}/sites/${site_id}/files`),
+                ]);
+                const subjectsData = await subjectsRes.json();
+                const pushesData = await pushesRes.json();
+                const pullsData = await pullsRes.json();
+                const filesData = await filesRes.json();
+                setSubjects(subjectsData);
+                setDataPushes(pushesData.data_pushes || []);
+                setDataPulls(pullsData.data_pulls || []);
+                setFiles(filesData.files || []);
+            } catch (e) {
+                setSubjects([]);
+                setDataPushes([]);
+                setDataPulls([]);
+                setFiles([]);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchAll();
+    }, [project_id, site_id, data_source_name]);
+
+    // Helpers for push
+    function getPushesForSubject(subject_id: string) {
+        return dataPushes.filter(
+            (push) => push.subject_id === subject_id && push.data_source_name === data_source_name
+        );
+    }
+    function getLastPushForSubject(subject_id: string) {
+        const pushes = getPushesForSubject(subject_id);
+        if (pushes.length === 0) return null;
+        return pushes.reduce((latest, curr) =>
+            new Date(curr.push_timestamp) > new Date(latest.push_timestamp) ? curr : latest
+        );
+    }
+    // Helpers for pull
+    function getPullsForSubject(subject_id: string) {
+        return dataPulls.filter(
+            (pull) => pull.subject_id === subject_id && pull.data_source_name === data_source_name
+        );
+    }
+    function getLastPullForSubject(subject_id: string) {
+        const pulls = getPullsForSubject(subject_id);
+        if (pulls.length === 0) return null;
+        return pulls.reduce((latest, curr) =>
+            new Date(curr.pull_timestamp) > new Date(latest.pull_timestamp) ? curr : latest
+        );
+    }
+    // Helpers for files
+    function getFilesForSubject(subject_id: string) {
+        return files.filter(
+            (file) => file.subject_id === subject_id && file.data_source_name === data_source_name
+        );
+    }
+    function getLastFileForSubject(subject_id: string) {
+        const subjectFiles = getFilesForSubject(subject_id);
+        if (subjectFiles.length === 0) return null;
+        return subjectFiles.reduce((latest, curr) =>
+            new Date(curr.m_time) > new Date(latest.m_time) ? curr : latest
+        );
+    }
+
+    if (loading) {
+        return <div className="space-y-4"><Skeleton className="h-6 w-32" /><Skeleton className="h-10 w-64" />
+            {[...Array(5)].map((_, i) => (<Skeleton key={i} className="h-12 w-full" />))}
+        </div>;
+    }
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold">Subjects & Status</h3>
+                <Badge variant="secondary">{subjects.length}</Badge>
+            </div>
+            <div className="rounded-md border">
+                <div className="relative w-full overflow-auto">
+                    <table className="w-full caption-bottom text-sm">
+                        <thead className="[&_tr]:border-b">
+                            <tr>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Subject ID</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Metadata Count</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Pull Status</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Last Pull</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Pull File Count</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Files</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Last File</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Push Status</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Last Push</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Push File Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {subjects.map((subject) => {
+                                // Pull
+                                const pulls = getPullsForSubject(subject.subject_id);
+                                const lastPull = getLastPullForSubject(subject.subject_id);
+                                // Push
+                                const pushes = getPushesForSubject(subject.subject_id);
+                                const lastPush = getLastPushForSubject(subject.subject_id);
+                                // Files
+                                const subjectFiles = getFilesForSubject(subject.subject_id);
+                                const lastFile = getLastFileForSubject(subject.subject_id);
+                                return (
+                                    <tr key={subject.subject_id} className="border-b hover:bg-muted/50">
+                                        {/* Subject ID and Metadata Count */}
+                                        <td className="p-4 font-mono font-medium">{subject.subject_id}</td>
+                                        <td className="p-4"><Badge variant={Object.keys(subject.subject_metadata || {}).length > 0 ? 'default' : 'secondary'}>{Object.keys(subject.subject_metadata || {}).length}</Badge></td>
+                                        {/* Pull */}
+                                        <td className="p-4">
+                                            {pulls.length > 0 ? (
+                                                <Badge variant="default" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">Success</Badge>
+                                            ) : (
+                                                <Badge variant="secondary">None</Badge>
+                                            )}
+                                        </td>
+                                        <td className="p-4">{lastPull ? new Date(lastPull.pull_timestamp).toLocaleString() : '-'}</td>
+                                        <td className="p-4">{pulls.length}</td>
+                                        {/* Files */}
+                                        <td className="p-4">{subjectFiles.length}</td>
+                                        <td className="p-4">{lastFile ? new Date(lastFile.m_time).toLocaleString() : '-'}</td>
+                                        {/* Push */}
+                                        <td className="p-4">
+                                            {pushes.length > 0 ? (
+                                                <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Success</Badge>
+                                            ) : (
+                                                <Badge variant="secondary">None</Badge>
+                                            )}
+                                        </td>
+                                        <td className="p-4">{lastPush ? new Date(lastPush.push_timestamp).toLocaleString() : '-'}</td>
+                                        <td className="p-4">{pushes.length}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

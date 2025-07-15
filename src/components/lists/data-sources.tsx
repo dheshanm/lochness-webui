@@ -94,21 +94,29 @@ export default function DataSourcesList(
                                     REDCap
                                 </Link>
                             </Button>
-                            <Button variant="outline">
-                                <Image src="/logo/sharepoint.png" alt="MindLAMP" width={24} height={24} className="rounded" />
-                                SharePoint
+                            <Button asChild variant="outline">
+                                <Link href={`/config/projects/${project_id}/sites/${site_id}/data-sources/sharepoint/new`}>
+                                    <Image src="/logo/sharepoint.png" alt="SharePoint" width={24} height={24} className="rounded" />
+                                    SharePoint
+                                </Link>
                             </Button>
-                            <Button variant="outline">
-                                <Image src="/logo/cantab.jpg" alt="MindLAMP" width={24} height={24} className="rounded" />
-                                CANTAB
+                            <Button asChild variant="outline">
+                                <Link href={`/config/projects/${project_id}/sites/${site_id}/data-sources/cantab/new`}>
+                                    <Image src="/logo/cantab.jpg" alt="CANTAB" width={24} height={24} className="rounded" />
+                                    CANTAB
+                                </Link>
                             </Button>
-                            <Button variant="outline">
-                                <Image src="/logo/xnat.jpeg" alt="MindLAMP" width={24} height={24} className="rounded" />
-                                XNAT
+                            <Button asChild variant="outline">
+                                <Link href={`/config/projects/${project_id}/sites/${site_id}/data-sources/xnat/new`}>
+                                    <Image src="/logo/xnat.jpeg" alt="XNAT" width={24} height={24} className="rounded" />
+                                    XNAT
+                                </Link>
                             </Button>
-                            <Button variant="outline">
-                                <Image src="/logo/mindLAMP.png" alt="MindLAMP" width={24} height={24} className="rounded" />
-                                MindLAMP
+                            <Button asChild variant="outline">
+                                <Link href={`/config/projects/${project_id}/sites/${site_id}/data-sources/mindlamp/new`}>
+                                    <Image src="/logo/mindLAMP.png" alt="MindLAMP" width={24} height={24} className="rounded" />
+                                    MindLAMP
+                                </Link>
                             </Button>
                         </div>
                         <DialogFooter>

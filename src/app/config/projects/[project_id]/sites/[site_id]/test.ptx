@@ -29,14 +29,20 @@ import SubjectsList from '@/components/lists/subjects';
 import DataPushesList from '@/components/lists/data-pushes';
 import JobsList from '@/components/lists/jobs';
 import { Heading } from '@/components/heading';
-import LogsTable from '@/components/lists/logs-table';
-import DataSyncsTable from '@/components/lists/data-syncs-table';
+import LogsViewer from '@/components/logs-viewer';
 
-
-import { SortingState } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+  SortingState,
+} from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+
 type Params = Promise<{ project_id: string, site_id: string }>
 
 export default function SitePage({
@@ -55,29 +61,21 @@ export default function SitePage({
     const [dataSinks, setDataSinks] = React.useState<DataSink[]>([]);
     const [loadingSinks, setLoadingSinks] = React.useState<boolean>(true);
 
+    // --- Data Sync Table State ---
+    const [syncSubjects, setSyncSubjects] = React.useState<any[]>([]);
+    const [syncDataSources, setSyncDataSources] = React.useState<any[]>([]);
+    const [syncDataPushes, setSyncDataPushes] = React.useState<any[]>([]);
+    const [syncDataPulls, setSyncDataPulls] = React.useState<any[]>([]);
+    const [syncFiles, setSyncFiles] = React.useState<any[]>([]);
+    const [syncLoading, setSyncLoading] = React.useState(true);
+    const [syncFilter, setSyncFilter] = React.useState("");
+    const [syncSorting, setSyncSorting] = React.useState<SortingState>([]);
+
     // --- Logs Table State ---
     const [logs, setLogs] = React.useState<any[]>([]);
     const [logsLoading, setLogsLoading] = React.useState(true);
     const [logFilter, setLogFilter] = React.useState("");
     const [logSorting, setLogSorting] = React.useState<SortingState>([]);
-    const [logsPage, setLogsPage] = React.useState(0);
-
-    // --- Data Syncs Table State ---
-    const [dataSyncRows, setDataSyncRows] = React.useState<any[]>([]);
-    const [dataSyncsLoading, setDataSyncsLoading] = React.useState(true);
-    const [dataSyncFilter, setDataSyncFilter] = React.useState("");
-    const [dataSyncSorting, setDataSyncSorting] = React.useState<SortingState>([]);
-    const [dataSyncPage, setDataSyncPage] = React.useState(0);
-
-    function parseLogRow(row: any) {
-      const match = row.extended_log_format?.match(/^([\d-]+ [\d:]+) \[(\w+)\] (.*)$/);
-      if (!match) return { timestamp: '', level: '', message: row.extended_log_format };
-      const [, timestamp, level, jsonStr] = match;
-      let json: any = {};
-      try { json = JSON.parse(jsonStr); } catch { json = { message: jsonStr }; }
-      return { timestamp, level, ...json };
-    }
-    const parsedLogs = logs.map(parseLogRow);
 
     const router = useRouter();
 
@@ -171,55 +169,210 @@ export default function SitePage({
         }
     }, [projectId, siteId]);
 
+    // --- Data Sync Table Fetch ---
     React.useEffect(() => {
-        async function fetchLogs() {
-            if (!projectId || !siteId) return;
-            setLogsLoading(true);
-            try {
-                const res = await fetch(`/api/v1/logs?project_id=${projectId}&site_id=${siteId}&limit=1000`);
-                const data = await res.json();
-                console.log('Fetched logs:', data); // Debugging line
-                setLogs(data.logs || data.rows || []);
-            } catch {
-                setLogs([]);
-            } finally {
-                setLogsLoading(false);
-            }
+      async function fetchSyncData() {
+        if (!projectId || !siteId) return;
+        setSyncLoading(true);
+        try {
+          const [subjectsRes, dataSourcesRes, pushesRes, pullsRes, filesRes] = await Promise.all([
+            fetch(`/api/v1/projects/${projectId}/sites/${siteId}/subjects`),
+            fetch(`/api/v1/projects/${projectId}/sites/${siteId}/sources`),
+            fetch(`/api/v1/projects/${projectId}/sites/${siteId}/data-pushes`),
+            fetch(`/api/v1/projects/${projectId}/sites/${siteId}/data-pulls`),
+            fetch(`/api/v1/projects/${projectId}/sites/${siteId}/files`),
+          ]);
+          setSyncSubjects(await subjectsRes.json());
+          setSyncDataSources(await dataSourcesRes.json());
+          setSyncDataPushes((await pushesRes.json()).data_pushes || []);
+          setSyncDataPulls((await pullsRes.json()).data_pulls || []);
+          setSyncFiles((await filesRes.json()).files || []);
+        } catch {
+          setSyncSubjects([]);
+          setSyncDataSources([]);
+          setSyncDataPushes([]);
+          setSyncDataPulls([]);
+          setSyncFiles([]);
+        } finally {
+          setSyncLoading(false);
         }
-        fetchLogs();
+      }
+      fetchSyncData();
     }, [projectId, siteId]);
 
+    // --- Logs Table Fetch ---
     React.useEffect(() => {
-        async function fetchDataPushes() {
-            if (!projectId || !siteId) return;
-            setDataSyncsLoading(true);
-            try {
-                const response = await fetch(`/api/v1/projects/${projectId}/sites/${siteId}/data-pushes`);
-                const data = await response.json();
-                // Map DataPush[] to DataSyncRow[]
-                const rows = (data.data_pushes || []).map((push: any) => ({
-                    subject_id: push.subject_id || '',
-                    data_source_name: push.data_source_name || '',
-                    data_source_type: push.data_sink_metadata?.type || '',
-                    metadata_count: 0, // Not available in DataPush, set to 0 or fetch if needed
-                    pull_status: 'Success', // Not available, set to 'Success' for now
-                    last_pull: '', // Not available
-                    pull_file_count: 0, // Not available
-                    files_count: 1, // Each push is one file
-                    last_file: push.file_path.split('/').pop() || push.file_path,
-                    push_status: 'Success', // Always success for a push
-                    last_push: push.push_timestamp,
-                    push_file_count: 1,
-                }));
-                setDataSyncRows(rows);
-            } catch (error) {
-                setDataSyncRows([]);
-            } finally {
-                setDataSyncsLoading(false);
-            }
+      async function fetchLogs() {
+        if (!projectId || !siteId) return;
+        setLogsLoading(true);
+        try {
+          const res = await fetch(`/api/v1/logs?project_id=${projectId}&site_id=${siteId}&limit=1000`);
+          const data = await res.json();
+          setLogs(data.rows || []);
+        } catch {
+          setLogs([]);
+        } finally {
+          setLogsLoading(false);
         }
-        fetchDataPushes();
+      }
+      fetchLogs();
     }, [projectId, siteId]);
+
+    // --- Data Sync Table Logic ---
+    const syncRows = React.useMemo(() => {
+      // One row per subject x data source
+      const rows: any[] = [];
+      for (const subject of syncSubjects) {
+        for (const ds of syncDataSources) {
+          // Pulls, Pushes, Files for this subject+ds
+          const pulls = syncDataPulls.filter(
+            (pull) => pull.subject_id === subject.subject_id && pull.data_source_name === ds.data_source_name
+          );
+          const lastPull = pulls.length > 0 ? pulls.reduce((latest, curr) => new Date(curr.pull_timestamp) > new Date(latest.pull_timestamp) ? curr : latest) : null;
+          const pushes = syncDataPushes.filter(
+            (push) => push.subject_id === subject.subject_id && push.data_source_name === ds.data_source_name
+          );
+          const lastPush = pushes.length > 0 ? pushes.reduce((latest, curr) => new Date(curr.push_timestamp) > new Date(latest.push_timestamp) ? curr : latest) : null;
+          const files = syncFiles.filter(
+            (file) => file.subject_id === subject.subject_id && file.data_source_name === ds.data_source_name
+          );
+          const lastFile = files.length > 0 ? files.reduce((latest, curr) => new Date(curr.m_time) > new Date(latest.m_time) ? curr : latest) : null;
+          rows.push({
+            subject_id: subject.subject_id,
+            data_source_name: ds.data_source_name,
+            data_source_type: ds.data_source_type,
+            metadata_count: Object.keys(subject.subject_metadata || {}).length,
+            pull_status: pulls.length > 0 ? 'Success' : 'None',
+            last_pull: lastPull ? new Date(lastPull.pull_timestamp).toLocaleString() : '-',
+            pull_file_count: pulls.length,
+            files_count: files.length,
+            last_file: lastFile ? new Date(lastFile.m_time).toLocaleString() : '-',
+            push_status: pushes.length > 0 ? 'Success' : 'None',
+            last_push: lastPush ? new Date(lastPush.push_timestamp).toLocaleString() : '-',
+            push_file_count: pushes.length,
+          });
+        }
+      }
+      return rows;
+    }, [syncSubjects, syncDataSources, syncDataPulls, syncDataPushes, syncFiles]);
+
+    const syncColumns: ColumnDef<any>[] = [
+      {
+        accessorKey: 'subject_id',
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Subject ID<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+        cell: info => <span className="font-mono">{info.getValue() as string}</span>,
+      },
+      {
+        accessorKey: 'data_source_name',
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Data Source<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+      },
+      {
+        accessorKey: 'data_source_type',
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Type<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+      },
+      {
+        accessorKey: 'metadata_count',
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Metadata Count<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+        cell: info => <Badge variant={info.getValue() > 0 ? 'default' : 'secondary'}>{info.getValue()}</Badge>,
+      },
+      {
+        accessorKey: 'pull_status',
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Pull Status<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+        cell: info => info.getValue() === 'Success' ? <Badge variant="default" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">Success</Badge> : <Badge variant="secondary">None</Badge>,
+      },
+      { accessorKey: 'last_pull', header: 'Last Pull' },
+      { accessorKey: 'pull_file_count', header: 'Pull File Count' },
+      { accessorKey: 'files_count', header: 'Files' },
+      { accessorKey: 'last_file', header: 'Last File' },
+      {
+        accessorKey: 'push_status',
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Push Status<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+        cell: info => info.getValue() === 'Success' ? <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Success</Badge> : <Badge variant="secondary">None</Badge>,
+      },
+      { accessorKey: 'last_push', header: 'Last Push' },
+      { accessorKey: 'push_file_count', header: 'Push File Count' },
+    ];
+
+    const syncTable = useReactTable({
+      data: syncRows.filter(row =>
+        syncFilter === '' ||
+        Object.values(row).some(val => (val || '').toString().toLowerCase().includes(syncFilter.toLowerCase()))
+      ),
+      columns: syncColumns,
+      getCoreRowModel: getCoreRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      state: { sorting: syncSorting },
+      onSortingChange: setSyncSorting,
+    });
+
+    // --- Logs Table Logic ---
+    function parseLogRow(row: any) {
+      const match = row.extended_log_format?.match(/^([\d-]+ [\d:]+) \[(\w+)\] (.*)$/);
+      if (!match) return { timestamp: '', level: '', message: row.extended_log_format };
+      const [, timestamp, level, jsonStr] = match;
+      let json: any = {};
+      try { json = JSON.parse(jsonStr); } catch { json = { message: jsonStr }; }
+      return { timestamp, level, ...json };
+    }
+    const parsedLogs = logs.map(parseLogRow);
+    const logColumns: ColumnDef<any>[] = [
+      {
+        accessorKey: "timestamp",
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Timestamp<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+        cell: info => <span className="font-mono text-xs">{info.getValue() as string}</span>,
+      },
+      {
+        accessorKey: "level",
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Level<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+        cell: info => <Badge variant={info.getValue() === "INFO" ? "secondary" : "default"}>{info.getValue() as string}</Badge>,
+      },
+      {
+        accessorKey: "event",
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Event<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+      },
+      {
+        accessorKey: "message",
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Message<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+        cell: info => <span className="break-words whitespace-pre-wrap text-xs">{info.getValue() as string}</span>,
+      },
+      {
+        accessorKey: "data_source_name",
+        header: ({ column }) => (
+          <button className="flex items-center gap-1 font-semibold" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Data Source<ArrowUpDown className="h-3 w-3" /></button>
+        ),
+      },
+    ];
+    const logTable = useReactTable({
+      data: parsedLogs.filter(row =>
+        logFilter === '' ||
+        Object.values(row).some(val => (val || '').toString().toLowerCase().includes(logFilter.toLowerCase()))
+      ),
+      columns: logColumns,
+      getCoreRowModel: getCoreRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      state: { sorting: logSorting },
+      onSortingChange: setLogSorting,
+    });
 
 
     return (
@@ -474,19 +627,48 @@ export default function SitePage({
                     </TabsContent>
                     <TabsContent value="syncs" className="mt-4">
                         <div className="p-4 border rounded-md bg-card text-card-foreground">
-                            {projectId && siteId && (
-                                <DataSyncsTable
-                                    rows={dataSyncRows}
-                                    loading={dataSyncsLoading}
-                                    filter={dataSyncFilter}
-                                    setFilter={setDataSyncFilter}
-                                    sorting={dataSyncSorting}
-                                    setSorting={setDataSyncSorting}
-                                    page={dataSyncPage}
-                                    setPage={setDataSyncPage}
-                                    pageSize={20}
-                                />
-                            )}
+                            <div className="mb-2 font-semibold">Data Sync Table</div>
+                            <div className="mb-2 flex items-center gap-2">
+                              <Input
+                                placeholder="Filter..."
+                                value={syncFilter}
+                                onChange={e => setSyncFilter(e.target.value)}
+                                className="w-64"
+                              />
+                              <Badge variant="secondary">{syncTable.getRowModel().rows.length} rows</Badge>
+                            </div>
+                            <div className="rounded-md border overflow-x-auto bg-card">
+                              <table className="min-w-full text-xs">
+                                <thead>
+                                  {syncTable.getHeaderGroups().map(headerGroup => (
+                                    <tr key={headerGroup.id}>
+                                      {headerGroup.headers.map(header => (
+                                        <th key={header.id} className="px-2 py-2 text-left font-semibold bg-muted">
+                                          {<>{flexRender(header.column.columnDef.header, header.getContext())}</>}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  ))}
+                                </thead>
+                                <tbody>
+                                  {syncLoading ? (
+                                    <tr><td colSpan={syncColumns.length} className="text-center py-8">Loading...</td></tr>
+                                  ) : syncTable.getRowModel().rows.length === 0 ? (
+                                    <tr><td colSpan={syncColumns.length} className="text-center py-8">No data found.</td></tr>
+                                  ) : (
+                                    syncTable.getRowModel().rows.map(row => (
+                                      <tr key={row.id} className="border-b hover:bg-muted/50">
+                                        {row.getVisibleCells().map(cell => (
+                                          <td key={cell.id} className="px-2 py-1 align-top">
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
                         </div>
                     </TabsContent>
                     <TabsContent value="subjects" className="mt-4">
@@ -504,17 +686,50 @@ export default function SitePage({
                         </div>
                     </TabsContent>
                     <TabsContent value="logs" className="mt-4">
-                        <LogsTable
-                            logs={parsedLogs}
-                            loading={logsLoading}
-                            filter={logFilter}
-                            setFilter={setLogFilter}
-                            sorting={logSorting}
-                            setSorting={setLogSorting}
-                            page={logsPage}
-                            setPage={setLogsPage}
-                            pageSize={20}
-                        />
+                        <div className="p-4 border rounded-md bg-card text-card-foreground">
+                          <div className="mb-2 font-semibold">Logs</div>
+                          <div className="mb-2 flex items-center gap-2">
+                            <Input
+                              placeholder="Filter logs..."
+                              value={logFilter}
+                              onChange={e => setLogFilter(e.target.value)}
+                              className="w-64"
+                            />
+                            <Badge variant="secondary">{logTable.getRowModel().rows.length} log entries</Badge>
+                          </div>
+                          <div className="rounded-md border overflow-x-auto bg-card">
+                            <table className="min-w-full text-xs">
+                              <thead>
+                                {logTable.getHeaderGroups().map(headerGroup => (
+                                  <tr key={headerGroup.id}>
+                                    {headerGroup.headers.map(header => (
+                                      <th key={header.id} className="px-2 py-2 text-left font-semibold bg-muted">
+                                        {<>{flexRender(header.column.columnDef.header, header.getContext())}</>}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </thead>
+                              <tbody>
+                                {logsLoading ? (
+                                  <tr><td colSpan={logColumns.length} className="text-center py-8">Loading logs...</td></tr>
+                                ) : logTable.getRowModel().rows.length === 0 ? (
+                                  <tr><td colSpan={logColumns.length} className="text-center py-8">No logs found.</td></tr>
+                                ) : (
+                                  logTable.getRowModel().rows.map(row => (
+                                    <tr key={row.id} className="border-b hover:bg-muted/50">
+                                      {row.getVisibleCells().map(cell => (
+                                        <td key={cell.id} className="px-2 py-1 align-top">
+                                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </td>
+                                      ))}
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>
