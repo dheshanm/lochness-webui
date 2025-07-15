@@ -115,8 +115,16 @@ export default function DataSinksList({ project_id, site_id }: DataSinksListProp
                                                 </div>
                                                 {/* Logo based on type */}
                                                 <div className="mb-3">
-                                                    {/* Show icon or logo based on sink type if available */}
-                                                    <Image src="/logo/window.svg" alt="Sink" width={32} height={32} className="rounded" />
+                                                    {/* Show icon or logo based on sink type or name if available */}
+                                                    {(() => {
+                                                        const type = sink.data_sink_metadata?.type?.toLowerCase();
+                                                        const name = sink.data_sink_name?.toLowerCase();
+                                                        if (type === 'minio' || (name && name.includes('minio'))) {
+                                                            return <Image src="/logo/minio.png" alt="MinIO" width={32} height={32} className="rounded" />;
+                                                        }
+                                                        // Add more sink types as needed
+                                                        return <Image src="/logo/window.svg" alt="Sink" width={32} height={32} className="rounded" />;
+                                                    })()}
                                                 </div>
                                                 {/* Text Content */}
                                                 <div className="flex-grow">
