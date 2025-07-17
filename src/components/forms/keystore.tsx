@@ -42,6 +42,11 @@ const keystoreSchema = z.object({
     sharepoint_client_id: z.string().optional(),
     sharepoint_client_secret: z.string().optional(),
     sharepoint_tenant_id: z.string().optional(),
+    sharepoint_secret_id: z.string().optional(),
+    // MindLAMP fields
+    mindlamp_api_url: z.string().optional(),
+    mindlamp_access_key: z.string().optional(),
+    mindlamp_secret_key: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.key_type === "minio") {
         if (!data.minio_access_key || data.minio_access_key.length === 0) {
@@ -100,6 +105,35 @@ const keystoreSchema = z.object({
                 code: z.ZodIssueCode.custom,
                 path: ["sharepoint_tenant_id"],
                 message: "SharePoint Tenant ID is required",
+            });
+        }
+        if (!data.sharepoint_secret_id || data.sharepoint_secret_id.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["sharepoint_secret_id"],
+                message: "SharePoint Secret ID is required",
+            });
+        }
+    } else if (data.key_type === "mindlamp") {
+        if (!data.mindlamp_api_url || data.mindlamp_api_url.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["mindlamp_api_url"],
+                message: "MindLAMP API URL is required",
+            });
+        }
+        if (!data.mindlamp_access_key || data.mindlamp_access_key.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["mindlamp_access_key"],
+                message: "MindLAMP Access Key is required",
+            });
+        }
+        if (!data.mindlamp_secret_key || data.mindlamp_secret_key.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["mindlamp_secret_key"],
+                message: "MindLAMP Secret Key is required",
             });
         }
     } else {
@@ -166,6 +200,10 @@ export default function KeystoreForm({
             sharepoint_client_id: "",
             sharepoint_client_secret: "",
             sharepoint_tenant_id: "",
+            sharepoint_secret_id: "",
+            mindlamp_api_url: "",
+            mindlamp_access_key: "",
+            mindlamp_secret_key: "",
         },
     });
 
@@ -197,9 +235,20 @@ export default function KeystoreForm({
                     form.setValue("sharepoint_client_id", parsedKeyValue.client_id || "");
                     form.setValue("sharepoint_client_secret", parsedKeyValue.client_secret || "");
                     form.setValue("sharepoint_tenant_id", parsedKeyValue.tenant_id || "");
+                    form.setValue("sharepoint_secret_id", parsedKeyValue.secret_id || "");
                 } catch (e) {
                     console.error("Error parsing SharePoint key_value:", e);
                     toast.error("Error parsing SharePoint credentials");
+                }
+            } else if (key_type === "mindlamp" && key_value) {
+                try {
+                    const parsedKeyValue = JSON.parse(key_value);
+                    form.setValue("mindlamp_api_url", parsedKeyValue.api_url || "");
+                    form.setValue("mindlamp_access_key", parsedKeyValue.access_key || "");
+                    form.setValue("mindlamp_secret_key", parsedKeyValue.secret_key || "");
+                } catch (e) {
+                    console.error("Error parsing MindLAMP key_value:", e);
+                    toast.error("Error parsing MindLAMP credentials");
                 }
             }
         }
@@ -230,19 +279,20 @@ export default function KeystoreForm({
 
             if (values.key_type === "minio") {
                 // For MinIO, the key_value is a JSON string of access_key and secret_key
+                const keyMetadataStr = values.key_metadata && values.key_metadata.trim() !== "" ? values.key_metadata : "{}";
                 body = {
                     keystore_name: values.keystore_name,
                     key_value: JSON.stringify({
                         access_key: values.minio_access_key,
                         secret_key: values.minio_secret_key,
-                        ...(values.key_metadata ? JSON.parse(values.key_metadata) : {})
+                        ...JSON.parse(keyMetadataStr)
                     }),
                     key_type: values.key_type,
                     project_id: values.project_id,
-                    key_metadata: values.key_metadata ? JSON.parse(values.key_metadata) : {},
+                    key_metadata: JSON.parse(keyMetadataStr),
                 };
                 const url = editMode
-                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name ?? "")}`
+                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name || "")}`
                     : `/api/v1/keystore`;
                 const method = editMode ? "PUT" : "POST";
 
@@ -279,7 +329,7 @@ export default function KeystoreForm({
                 window.location.href = `/config/projects/${values.project_id}`;
 
             } else if (values.key_type === "xnat") {
-                const keyMetadataStr = values.key_metadata ?? '{}';
+                const keyMetadataStr = values.key_metadata && values.key_metadata.trim() !== "" ? values.key_metadata : "{}";
                 body = {
                     keystore_name: values.keystore_name,
                     key_value: JSON.stringify({
@@ -293,7 +343,7 @@ export default function KeystoreForm({
                     key_metadata: JSON.parse(keyMetadataStr),
                 };
                 url = editMode
-                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name ?? "")}`
+                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name || "")}`
                     : `/api/v1/keystore`;
                 method = editMode ? "PUT" : "POST";
 
@@ -326,13 +376,14 @@ export default function KeystoreForm({
                 window.location.href = `/config/projects/${values.project_id}`;
 
             } else if (values.key_type === "sharepoint") {
-                const keyMetadataStr = values.key_metadata ?? '{}';
+                const keyMetadataStr = values.key_metadata && values.key_metadata.trim() !== "" ? values.key_metadata : "{}";
                 body = {
                     keystore_name: values.keystore_name,
                     key_value: JSON.stringify({
                         client_id: values.sharepoint_client_id,
                         client_secret: values.sharepoint_client_secret,
                         tenant_id: values.sharepoint_tenant_id,
+                        secret_id: values.sharepoint_secret_id,
                         ...JSON.parse(keyMetadataStr)
                     }),
                     key_type: values.key_type,
@@ -340,7 +391,7 @@ export default function KeystoreForm({
                     key_metadata: JSON.parse(keyMetadataStr),
                 };
                 url = editMode
-                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name ?? "")}`
+                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name || "")}`
                     : `/api/v1/keystore`;
                 method = editMode ? "PUT" : "POST";
 
@@ -371,17 +422,63 @@ export default function KeystoreForm({
                         : "SharePoint keystore entry created successfully"
                 );
                 window.location.href = `/config/projects/${values.project_id}`;
+            } else if (values.key_type === "mindlamp") {
+                const keyMetadataStr = values.key_metadata && values.key_metadata.trim() !== "" ? values.key_metadata : "{}";
+                body = {
+                    keystore_name: values.keystore_name,
+                    key_value: JSON.stringify({
+                        api_url: values.mindlamp_api_url,
+                        access_key: values.mindlamp_access_key,
+                        secret_key: values.mindlamp_secret_key,
+                        ...JSON.parse(keyMetadataStr)
+                    }),
+                    key_type: values.key_type,
+                    project_id: values.project_id,
+                    key_metadata: JSON.parse(keyMetadataStr),
+                };
+                url = editMode
+                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name || "")}`
+                    : `/api/v1/keystore`;
+                method = editMode ? "PUT" : "POST";
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(body),
+                });
+                let errorData: any = {};
+                if (!response.ok) {
+                    const text = await response.text();
+                    try {
+                        errorData = text ? JSON.parse(text) : {};
+                    } catch {
+                        errorData = { error: text };
+                    }
+                    toast.error("Error saving MindLAMP keystore entry", {
+                        description: errorData.error || response.statusText
+                    })
+                    setLoading(false);
+                    return;
+                }
+                toast.success(
+                    editMode
+                        ? "MindLAMP keystore entry updated successfully"
+                        : "MindLAMP keystore entry created successfully"
+                );
+                window.location.href = `/config/projects/${values.project_id}`;
             } else {
-                // Default: single entry (non-MinIO)
+                const keyMetadataStr = values.key_metadata && values.key_metadata.trim() !== "" ? values.key_metadata : "{}";
                 body = {
                     keystore_name: values.keystore_name,
                     key_value: values.key_value,
                     key_type: values.key_type,
                     project_id: values.project_id,
-                    key_metadata: values.key_metadata ? JSON.parse(values.key_metadata) : {},
+                    key_metadata: JSON.parse(keyMetadataStr),
                 };
                 const url = editMode
-                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name ?? "")}`
+                    ? `/api/v1/keystore/${encodeURIComponent(values.keystore_name || "")}`
                     : `/api/v1/keystore`;
                 const method = editMode ? "PUT" : "POST";
 
@@ -502,7 +599,7 @@ export default function KeystoreForm({
                                     )}
                                 />
                             </>
-                        ) : (
+                        ) : selectedKeyType === "xnat" ? (
                             <>
                                 <FormField
                                     control={form.control}
@@ -547,8 +644,58 @@ export default function KeystoreForm({
                                     )}
                                 />
                             </>
-                        )}
-                        {selectedKeyType === "sharepoint" && (
+                        ) : selectedKeyType === "mindlamp" ? (
+                            <>
+                                <FormField
+                                    control={form.control}
+                                    name="mindlamp_api_url"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>MindLAMP API URL</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="https://api.mindlamp.com" {...field} />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The base URL for the MindLAMP API.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="mindlamp_access_key"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>MindLAMP Access Key</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="MindLAMP Access Key" {...field} />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The API key for authentication with MindLAMP.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="mindlamp_secret_key"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>MindLAMP Secret Key</FormLabel>
+                                            <FormControl>
+                                                <Input type={showSecret ? "text" : "password"} placeholder="MindLAMP Secret Key" {...field} />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The API secret for authentication with MindLAMP.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </>
+                        ) : selectedKeyType === "sharepoint" ? (
                             <>
                                 <FormField
                                     control={form.control}
@@ -598,7 +745,44 @@ export default function KeystoreForm({
                                         </FormItem>
                                     )}
                                 />
+                                <FormField
+                                    control={form.control}
+                                    name="sharepoint_secret_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>SharePoint Secret ID</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Azure App Secret ID" {...field} />
+                                            </FormControl>
+                                            <FormDescription>
+                                                The Azure AD Secret ID for SharePoint access.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </>
+                        ) : (
+                            // Default: generic secret
+                            <FormField
+                                control={form.control}
+                                name="key_value"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Secret Value</FormLabel>
+                                        <FormControl>
+                                            <Input type={showSecret ? "text" : "password"} placeholder="Secret value" {...field} />
+                                        </FormControl>
+                                        <Button type="button" variant="ghost" size="icon" onClick={handleCopySecret}>
+                                            <Copy className="w-4 h-4" />
+                                        </Button>
+                                        <FormDescription>
+                                            The secret value to store in the keystore.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         )}
                         <FormField
                             control={form.control}

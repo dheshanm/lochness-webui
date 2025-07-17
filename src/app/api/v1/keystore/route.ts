@@ -11,30 +11,39 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url);
         const project_id = searchParams.get('project_id');
+        const key_type = searchParams.get('key_type');
 
         if (!project_id) {
             return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
         }
 
         const connection = getConnection();
-        // Fetch keystore entries for the project (excluding encrypted key_value)
-        const query = `
+        let query = `
             SELECT key_name, key_type, project_id, key_metadata
             FROM key_store 
             WHERE project_id = $1
-            ORDER BY key_name
         `;
-        const values = [project_id];
-        
+        const values: any[] = [project_id];
+        if (key_type) {
+            query += ' AND key_type = $2';
+            values.push(key_type);
+        }
+        query += ' ORDER BY key_name';
         try {
             const { rows } = await connection.query(query, values);
-            const entries = rows.map((row: any) => ({
-                keystore_name: row.key_name,
-                key_type: row.key_type,
-                project_id: row.project_id,
-                key_metadata: row.key_metadata,
-            }));
-            return NextResponse.json({ entries });
+            if (key_type) {
+                // For dropdowns, just return the names
+                const keystore_names = rows.map((row: any) => row.key_name);
+                return NextResponse.json({ keystore_names });
+            } else {
+                const entries = rows.map((row: any) => ({
+                    keystore_name: row.key_name,
+                    key_type: row.key_type,
+                    project_id: row.project_id,
+                    key_metadata: row.key_metadata,
+                }));
+                return NextResponse.json({ entries });
+            }
         } catch (dbError) {
             console.error('DB error fetching keystore entries:', dbError);
             return NextResponse.json({ error: 'Database error fetching keystore entries' }, { status: 500 });

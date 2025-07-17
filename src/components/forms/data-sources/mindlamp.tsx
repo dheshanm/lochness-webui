@@ -1,5 +1,6 @@
 "use client"
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,22 +17,40 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
     keystore_name: z.string().min(1, "Keystore Name is required"),
-    api_url: z.string().url("API URL must be a valid URL"),
 });
 
 export type MindlampFormSchema = z.infer<typeof formSchema>;
 
 export default function MindlampForm({ project_id, site_id, instance_name }: { project_id: string, site_id: string, instance_name: string | null }) {
+    const [keystoreOptions, setKeystoreOptions] = useState<string[]>([]);
     const form = useForm<MindlampFormSchema>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             keystore_name: "",
-            api_url: "",
         },
     });
+
+    useEffect(() => {
+        // Fetch available mindlamp keystore entries for this project
+        async function fetchKeystoreOptions() {
+            try {
+                const res = await fetch(`/api/v1/keystore?project_id=${project_id}&key_type=mindlamp`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setKeystoreOptions(data.keystore_names || []);
+                } else {
+                    setKeystoreOptions([]);
+                }
+            } catch {
+                setKeystoreOptions([]);
+            }
+        }
+        fetchKeystoreOptions();
+    }, [project_id]);
 
     async function onSubmit(values: MindlampFormSchema) {
         try {
@@ -43,7 +62,6 @@ export default function MindlampForm({ project_id, site_id, instance_name }: { p
                 data_source_type: "mindlamp",
                 data_source_metadata: {
                     keystore_name: values.keystore_name,
-                    api_url: values.api_url,
                 },
             };
             const response = await fetch(`/api/v1/projects/${project_id}/sites/${site_id}/sources`, {
@@ -75,26 +93,19 @@ export default function MindlampForm({ project_id, site_id, instance_name }: { p
                         <FormItem>
                             <FormLabel>Keystore Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="mindlamp_prod" {...field} />
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select MindLAMP keystore entry" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {keystoreOptions.map((name) => (
+                                            <SelectItem key={name} value={name}>{name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </FormControl>
                             <FormDescription>
-                                Name of the keystore entry for MindLAMP credentials.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="api_url"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>API URL</FormLabel>
-                            <FormControl>
-                                <Input placeholder="https://mindlamp.example.com/api" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                                MindLAMP API endpoint URL.
+                                Select the keystore entry containing MindLAMP credentials for this project.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>

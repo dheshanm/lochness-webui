@@ -1,20 +1,17 @@
-"use client"
+"use client";
 import React from 'react';
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-
 import MindlampForm from '@/components/forms/data-sources/mindlamp';
 
-interface Params {
-    project_id: string;
-    site_id: string;
-}
-
-export default function NewMindlampDataSource({ params }: { params: Params }) {
-    const { project_id: projectId, site_id: siteId } = params;
+export default function NewMindlampDataSource() {
+    const params = useParams();
+    const projectId = params.project_id as string;
+    const siteId = params.site_id as string;
 
     return (
         <>

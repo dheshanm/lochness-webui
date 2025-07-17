@@ -8,6 +8,7 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { SubjectsForDataSourceTable } from '@/components/lists/subjects-table';
+import { useParams } from "next/navigation";
 
 interface Params {
     project_id: string;
@@ -25,8 +26,11 @@ interface DataSource {
     };
 }
 
-export default function ShowMindlampDataSource({ params }: { params: Params }) {
-    const { project_id: projectId, site_id: siteId, instance_name: instanceName } = params;
+export default function ShowMindlampDataSource() {
+    const params = useParams();
+    const projectId = params.project_id as string;
+    const siteId = params.site_id as string;
+    const instanceName = params.instance_name as string;
     const [dataSource, setDataSource] = React.useState<DataSource | null>(null);
     const [loading, setLoading] = React.useState(true);
 
