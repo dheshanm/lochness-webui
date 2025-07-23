@@ -25,6 +25,8 @@ const ReactJson = dynamic(() => import('react-json-view'), { ssr: false });
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import JobsList from '@/components/lists/jobs';
 import { SubjectsForDataSourceTable } from '@/components/lists/subjects-table';
+import LogsTable from '@/components/lists/logs-table';
+import { SortingState } from '@tanstack/react-table';
 
 type Params = Promise<{ project_id: string, site_id: string, instance_name: string }>;
 
@@ -38,6 +40,14 @@ export default function ShowRedcapDataSource({
     const [instanceName, setInstanceName] = React.useState<string | null>(null);
 
     const [ dataSource, setDataSource ] = React.useState<DataSource | null>(null);
+
+    // Logs state
+    const [logs, setLogs] = React.useState<any[]>([]);
+    const [logsLoading, setLogsLoading] = React.useState(true);
+    const [logFilter, setLogFilter] = React.useState("");
+    const [logSorting, setLogSorting] = React.useState<SortingState>([]);
+    const [logPage, setLogPage] = React.useState(0);
+    const logPageSize = 20;
 
     const router = useRouter();
     const handleDeleteDataSource = async () => {
@@ -100,6 +110,41 @@ export default function ShowRedcapDataSource({
 
         fetchDataSource();
     }, [projectId, siteId, instanceName]);
+
+    // Fetch logs for this data source
+    React.useEffect(() => {
+        async function fetchLogs() {
+            if (projectId && siteId && instanceName) {
+                setLogsLoading(true);
+                try {
+                    const res = await fetch(`/api/v1/logs?project_id=${projectId}&site_id=${siteId}&data_source_name=${instanceName}&limit=500`);
+                    const data = await res.json();
+                    setLogs(data.rows || []);
+                } catch (e) {
+                    setLogs([]);
+                } finally {
+                    setLogsLoading(false);
+                }
+            }
+        }
+        fetchLogs();
+    }, [projectId, siteId, instanceName]);
+
+    // Parse logs for table display (match LogsViewer style)
+    function parseLogRow(row: any) {
+        // Example: 2025-07-12 11:53:04 [INFO] {"event": ...}
+        const match = row.extended_log_format?.match(/^([\d-]+ [\d:]+) \[(\w+)\] (.*)$/);
+        if (!match) return { timestamp: '', level: '', message: row.extended_log_format };
+        const [, timestamp, level, jsonStr] = match;
+        let json: any = {};
+        try {
+            json = JSON.parse(jsonStr);
+        } catch {
+            json = { message: jsonStr };
+        }
+        return { timestamp, level, ...json };
+    }
+    const parsedLogs = logs.map(parseLogRow);
 
     return (
         <>
@@ -266,10 +311,11 @@ export default function ShowRedcapDataSource({
 
             <div className="flex justify-center w-full px-4">
                 <Tabs defaultValue="details" className="w-full max-w-5xl">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="details">Details</TabsTrigger>
                         <TabsTrigger value="subjects">Subjects & Status</TabsTrigger>
                         <TabsTrigger value="jobs">Jobs</TabsTrigger>
+                        <TabsTrigger value="logs">Logs</TabsTrigger>
                     </TabsList>
                     <TabsContent value="details" className="mt-4">
                         <div className="p-4 border rounded-md bg-card text-card-foreground">
@@ -382,6 +428,21 @@ export default function ShowRedcapDataSource({
                             {projectId && siteId && instanceName && (
                                 <JobsList project_id={projectId} site_id={siteId} data_source_name={instanceName} />
                             )}
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="logs" className="mt-4">
+                        <div className="p-4 border rounded-md bg-card text-card-foreground">
+                            <LogsTable
+                                logs={parsedLogs}
+                                loading={logsLoading}
+                                filter={logFilter}
+                                setFilter={setLogFilter}
+                                sorting={logSorting}
+                                setSorting={setLogSorting}
+                                page={logPage}
+                                setPage={setLogPage}
+                                pageSize={logPageSize}
+                            />
                         </div>
                     </TabsContent>
                 </Tabs>
